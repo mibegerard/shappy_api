@@ -18,6 +18,7 @@ exports.registerAsRestaurateur = asyncHandler(async (req, res, next) => {
         firstName, 
         lastName, 
         city,
+        postalCode,
         phoneNumber,
         restaurantName,
         restaurantAddress 
@@ -37,6 +38,7 @@ exports.registerAsRestaurateur = asyncHandler(async (req, res, next) => {
             firstName,
             lastName,
             city,
+            postalCode,
             phoneNumber,
             restaurantName,
             restaurantAddress
@@ -71,7 +73,8 @@ exports.registerAsProducteur = asyncHandler(async (req, res, next) => {
         password, 
         firstName, 
         lastName, 
-        commune, 
+        commune,
+        postalCode, 
         telephone, 
         products 
     } = req.body;
@@ -90,6 +93,7 @@ exports.registerAsProducteur = asyncHandler(async (req, res, next) => {
             firstName,
             lastName,
             commune,
+            postalCode,
             telephone,
             products
         });
@@ -118,25 +122,23 @@ exports.registerAsProducteur = asyncHandler(async (req, res, next) => {
  * @access              Public
  *******************************************************************/
 exports.login = asyncHandler(async (req, res, next) => {
-    const { email, password, role } = req.body;
+    const { email, password } = req.body;
+
+    // Validate input
+    if (!email || !password) {
+        return next(new ErrorResponse('Please provide both email and password', 400));
+    }
 
     try {
-        let user;
-        if (role === 'restaurateur') {
-            user = await RestaurateurUserModel.findOne({ email });
-        } else if (role === 'producteur') {
-            user = await ProducteurUserModel.findOne({ email });
-        } else {
-            return next(new ErrorResponse('Invalid role specified', 400));
-        }
-
+        // Check if the user exists in both collections
+        let user = await RestaurateurUserModel.findOne({ email });
         if (!user) {
-            return next(new ErrorResponse('Invalid email or password', 401));
+            user = await ProducteurUserModel.findOne({ email });
         }
 
-        const isMatch = await user.comparePassword(password);
-        if (!isMatch) {
-            return next(new ErrorResponse('Invalid email or password', 401));
+        // Check if user exists and passwords match
+        if (!user || !(await user.comparePassword(password))) {
+            return next(new ErrorResponse('Invalid credentials', 401));
         }
 
         // Generate JWT token

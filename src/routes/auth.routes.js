@@ -28,18 +28,18 @@ router.route('/auth/register/restaurateur').post(registerAsRestaurateur);
 router.route('/auth/register/producteur').post(registerAsProducteur);
 
 /*******************************************************************
- * @desc                Login a user (both restaurateur and producteur)
+ * @desc                Login user (both restaurateur and producteur)
  * @route               POST /auth/login
  * @access              Public
  *******************************************************************/
-router.route('/auth/login', validatePassword, login);
+router.route('/auth/login').post(validatePassword, login);
 
 /*******************************************************************
  * @desc                Logout a user
  * @route               POST /auth/log-out
  * @access              Public
  *******************************************************************/
-router.route('/auth/log-out').post(logout);
+router.route('/auth/logout').post(logout);
 
 /*******************************************************************
  * @desc                Get current logged-in user's data
