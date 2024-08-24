@@ -6,6 +6,7 @@ const producteurUserSchema = new mongoose.Schema(
         firstName: { type: String, required: true },
         lastName: { type: String, required: true },
         commune: { type: String, required: true },
+        postalCode: { type: String, required: true },
         telephone: { type: String, required: true },
         email: { type: String, required: true, unique: true },
         role: { type: String, required: true, enum: ["producteur"], default: "producteur" },

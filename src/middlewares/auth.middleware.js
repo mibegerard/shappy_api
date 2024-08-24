@@ -4,18 +4,43 @@ const { verifyJwt } = require('../helper/jwt.helper');
 const ProducteurUserModel = require("../models/producteur.model");
 const RestaurateurUserModel = require("../models/restaurateur.model");
 
-// Helper function to determine the user model based on role
+// Helper function to get the user model based on role
 const getUserModel = (role) => {
-    return role === 'restaurateur' ? RestaurateurUserModel : ProducteurUserModel;
+    switch (role) {
+        case 'restaurateur':
+            return RestaurateurUserModel;
+        case 'producteur':
+            return ProducteurUserModel;
+        default:
+            throw new ErrorResponse('Invalid role', 400);
+    }
+};
+
+// Helper function to get user model by email
+const getUserModelByEmail = async (email) => {
+    let userModel = await RestaurateurUserModel.findOne({ email });
+    if (userModel) return RestaurateurUserModel;
+
+    userModel = await ProducteurUserModel.findOne({ email });
+    if (userModel) return ProducteurUserModel;
+
+    return null;
 };
 
 // Middleware to validate user password during login or authentication processes
 exports.validatePassword = asyncHandler(async (req, res, next) => {
-    const { email, password, role } = req.body;
+    const { email, password } = req.body;
+
+    if (!email || !password) {
+        return next(new ErrorResponse('Email and password are required', 400));
+    }
 
     try {
-        // Get the appropriate user model based on role
-        const UserModel = getUserModel(role);
+        // Get the user model based on email
+        const UserModel = await getUserModelByEmail(email);
+        if (!UserModel) {
+            return next(new ErrorResponse('Invalid email or password', 401));
+        }
 
         // Find user by email
         const user = await UserModel.findOne({ email });
@@ -37,31 +62,35 @@ exports.validatePassword = asyncHandler(async (req, res, next) => {
     }
 });
 
+
 // Middleware to protect routes by requiring a valid JWT token
 exports.protectWithToken = asyncHandler(async (req, res, next) => {
     const token = extractToken(req);
 
     if (!token) {
+        console.log('No token provided');
         return next(new ErrorResponse('Not authorized to access this route', 401));
     }
 
     try {
-        // Verify the token
         const decoded = verifyJwt(token);
-
-        // Get the appropriate user model based on role
         const UserModel = getUserModel(decoded.role);
-
-        // Find the user by ID
         const user = await UserModel.findById(decoded.id);
+
+        console.log(decoded);
+
+
+
         if (!user) {
+            console.log('No user found with this ID');
             return next(new ErrorResponse('No user found with this ID', 404));
         }
 
-        // Attach user to request object and move to the next middleware
+        console.log(`User authenticated: ${user.email}`);
         req.user = user;
         next();
     } catch (error) {
+        console.log('Authentication failed', error);
         return next(new ErrorResponse('Not authorized to access this route', 401));
     }
 });
@@ -77,6 +106,8 @@ exports.verifyAndGetUser = asyncHandler(async (req, res, next) => {
     try {
         // Verify the token
         const decoded = verifyJwt(token);
+
+        console.log(decoded);
 
         // Get the appropriate user model based on role
         const UserModel = getUserModel(decoded.role);
@@ -124,6 +155,7 @@ async function getUserFromToken(req) {
     }
 
     const decoded = verifyJwt(token);
+    console.log(decoded);
     const UserModel = getUserModel(decoded.role);
     const user = await UserModel.findById(decoded.id);
 
