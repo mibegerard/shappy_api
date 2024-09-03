@@ -63,105 +63,77 @@ exports.validatePassword = asyncHandler(async (req, res, next) => {
 });
 
 
-// Middleware to protect routes by requiring a valid JWT token
+/*******************************************
+ * @type {function(*=, *=, *=): Promise<*>}
+ *******************************************/
+//protect routes
 exports.protectWithToken = asyncHandler(async (req, res, next) => {
-    const token = extractToken(req);
+    let token
+    if (req?.cookies?.token) {
+        token = req.cookies.token
+    } else if (req?.headers?.authorization && req?.headers?.authorization?.startsWith('Bearer')) {
+        token = req.headers.authorization.split(' ')[1]
+    }
 
     if (!token) {
-        console.log('No token provided');
-        return next(new ErrorResponse('Not authorized to access this route', 401));
+        return next(new ErrorResponse('Non authentifié, vous devez vous authentifier', 401))
     }
 
-    try {
-        const decoded = verifyJwt(token);
-        const UserModel = getUserModel(decoded.role);
-        const user = await UserModel.findById(decoded.id);
+    const {expired, verifiedToken} = await verifyJwt(token)
 
-        console.log(decoded);
+    console.log('Verified Token:', verifiedToken);
 
-
-
-        if (!user) {
-            console.log('No user found with this ID');
-            return next(new ErrorResponse('No user found with this ID', 404));
-        }
-
-        console.log(`User authenticated: ${user.email}`);
-        req.user = user;
-        next();
-    } catch (error) {
-        console.log('Authentication failed', error);
-        return next(new ErrorResponse('Not authorized to access this route', 401));
+    if (verifiedToken) {
+        req.user = verifiedToken
+        console.log('Authenticated User:', req.user); // Debugging log
+        return next()
     }
-});
+    console.log('Authenticated User:', req.user); // Debugging log
 
-// Middleware to check token and return user data
+
+    if (expired) {
+        return next(new ErrorResponse('Le token d\'accès a expiré, veuillez vous reconnecter', 401));
+    }
+
+    return next(new ErrorResponse('Le token d\'accès n\'est pas correct, vous devez vous authentifier', 401));
+})
+
+
+//check token and get data
 exports.verifyAndGetUser = asyncHandler(async (req, res, next) => {
-    const token = extractToken(req);
+
+    const user = await verifyHeaderToken(req, next)
+
+    if (!user) return next(new ErrorResponse("Le token d'accès n'est pas correct, vous devez vous authentifier", 401))
+
+    res.status(200).send({
+        success: false,
+        data: user
+    })
+})
+
+async function verifyHeaderToken(req, next, paramToken = null) {
+    let token
+    if (req?.cookies?.token && paramToken === null) {
+        token = req.cookies.token
+    } else if (req?.headers?.authorization && req?.headers?.authorization?.startsWith('Bearer') && paramToken === null) {
+        token = req.headers.authorization.split(' ')[1]
+    } else if (paramToken) {
+        token = paramToken
+    }
 
     if (!token) {
-        return next(new ErrorResponse('No token provided', 401));
+        return next(new ErrorResponse('Non authentifié, vous devez vous authentifier', 401))
     }
 
-    try {
-        // Verify the token
-        const decoded = verifyJwt(token);
-
-        console.log(decoded);
-
-        // Get the appropriate user model based on role
-        const UserModel = getUserModel(decoded.role);
-
-        // Find the user by ID
-        const user = await UserModel.findById(decoded.id).select('-password');
-        if (!user) {
-            return next(new ErrorResponse('No user found with this ID', 404));
-        }
-
-        // Attach user to request object and return user data
-        req.user = user;
-        res.status(200).json({
-            success: true,
-            data: omit(user.toObject(), 'password')
-        });
-    } catch (error) {
-        return next(new ErrorResponse('Error verifying token', 401));
-    }
-});
-
-// Extract token from cookies, Authorization header, or provided token string
-function extractToken(req) {
-    let token = null;
-
-    // Check Authorization header
-    if (req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {
-        token = req.headers.authorization.split(' ')[1];
-    }
-
-    // Check cookies
-    else if (req.cookies && req.cookies.token) {
-        token = req.cookies.token;
-    }
-
-    return token;
+    const {expired, verifiedToken} = await verifyJwt(token)
+    return verifiedToken
 }
 
-// Get user based on verified token
-async function getUserFromToken(req) {
-    const token = extractToken(req);
-
-    if (!token) {
-        throw new ErrorResponse('No token provided', 401);
+// Middleware to ensure the user is a producteur
+exports.ensureProducteurRole = (req, res, next) => {
+    if (req.user.role !== 'producteur') {
+        return next(new ErrorResponse('Unauthorized access', 403));
     }
-
-    const decoded = verifyJwt(token);
-    console.log(decoded);
-    const UserModel = getUserModel(decoded.role);
-    const user = await UserModel.findById(decoded.id);
-
-    if (!user) {
-        throw new ErrorResponse('No user found with this ID', 404);
-    }
-
-    return user;
-}
+    next();
+};

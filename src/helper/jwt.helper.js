@@ -7,7 +7,7 @@ const jwt = require("jsonwebtoken")
  * @returns {*}             JWT Token with jsonwebtoken
  ********************************************************************/
 exports.jwtSign = (userInfo) => {
-    const secret = process.env.SECRET
+    const secret = "my$uper$ecretKey1234567890!"
     const expiresIn = process.env.ACCESS_TOKEN_TIME_TO_LIVE
     return jwt.sign(userInfo, secret, {expiresIn})
 }
@@ -18,7 +18,7 @@ exports.jwtSign = (userInfo) => {
  * @returns {*}             JWT Token with jsonwebtoken
  ********************************************************************/
 exports.createUrlToken = (data) => {
-    const secret = process.env.SECRET
+    const secret = "my$uper$ecretKey1234567890!"
     const expiresIn = "24h"
     return jwt.sign(data, secret, {expiresIn})
 }
@@ -31,8 +31,8 @@ exports.createUrlToken = (data) => {
  *******************************************************************/
 exports.verifyJwt = async (token) => {
     try {
-        const secret = process.env.SECRET
-        const verifiedToken = await jwt.verify(token, secret)
+        const secret = "my$uper$ecretKey1234567890!"
+        const verifiedToken = jwt.verify(token, secret)
         return {valid: true, expired: false, verifiedToken}
     } catch (error) {
         return {valid: false, expired: error.message === "jwt expired", verifiedToken: null}
