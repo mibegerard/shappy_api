@@ -72,7 +72,7 @@ exports.getAllProducts = asyncHandler(async (req, res, next) => {
 
     // Pagination options
     const products = await ProductModel.find(query)
-        .populate('producteur', 'firstName lastName')
+        .populate('producteur', 'firstName lastName commune postalCode telephone')
         .sort(sortOptions)
         .skip((page - 1) * limit)
         .limit(Number(limit));
@@ -96,7 +96,7 @@ exports.getAllProducts = asyncHandler(async (req, res, next) => {
  *******************************************************************/
 exports.getProductById = asyncHandler(async (req, res, next) => {
     const product = await ProductModel.findById(req.params.id)
-        .populate('producteur', 'firstName lastName');
+        .populate('producteur', 'firstName lastName commune postalCode telephone');
 
     if (!product) {
         return next(new ErrorResponse('Product not found', 404));
@@ -115,7 +115,7 @@ exports.getProductById = asyncHandler(async (req, res, next) => {
  *******************************************************************/
 exports.getProductByName = asyncHandler(async (req, res, next) => {
     const product = await ProductModel.findOne({ name: req.params.name })
-        .populate('producteur', 'firstName lastName');
+        .populate('producteur', 'firstName lastName commune postalCode telephone');
 
     if (!product) {
         return next(new ErrorResponse('Product not found', 404));
@@ -148,7 +148,7 @@ exports.updateProductById = asyncHandler(async (req, res, next) => {
     product = await ProductModel.findByIdAndUpdate(req.params.id, updates, {
         new: true,
         runValidators: true,
-    }).populate('producteur', 'firstName lastName'); // Ensure populated fields
+    }).populate('producteur', 'firstName lastName commune postalCode telephone'); // Ensure populated fields
 
     res.status(200).json({
         success: true,
