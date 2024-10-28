@@ -307,9 +307,19 @@ exports.resendVerificationEmail = asyncHandler(async (req, res, next) => {
         // Set up email options
         const options = {
             email: user.email,
-            subject: 'Email Verification',
-            message: `Please click the link below to verify your email: \n\n ${verificationUrl}`,
-            html: `<p>Please click <a href="${verificationUrl}">here</a> to verify your email.</p>`
+            subject: 'Vérification de l\'email',
+            message: `Veuillez cliquer sur le lien ci-dessous pour vérifier votre adresse email : \n\n ${verificationUrl}`,
+            html: `
+                <div style="font-family: Arial, sans-serif; padding: 20px; background-color: #f9f9f9; border-radius: 5px;">
+                    <h2 style="color: #333;">Bienvenue sur Shappy !</h2>
+                    <p style="color: #555;">Merci de vous être inscrit. Pour finaliser votre inscription, veuillez vérifier votre adresse email en cliquant sur le lien ci-dessous :</p>
+                    <p style="margin: 20px 0;">
+                        <a href="${verificationUrl}" style="background-color: #4CAF50; color: white; padding: 10px 15px; text-decoration: none; border-radius: 5px;">Vérifier l'email</a>
+                    </p>
+                    <p style="color: #555;">Si vous n'avez pas créé de compte, vous pouvez ignorer cet email.</p>
+                    <p style="color: #999;">Cordialement,<br/>L'équipe Shappy</p>
+                </div>
+            `,
         };
 
         // Send verification email
