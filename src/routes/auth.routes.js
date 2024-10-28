@@ -3,50 +3,88 @@ const {
     registerAsRestaurateur,
     registerAsProducteur,
     login,
-    logout
+    logout,
+    resendVerificationEmail
 } = require("../controllers/auth.controller");
 const {
     validatePassword,
     protectWithToken,
-    verifyAndGetUser
+    verifyAndGetUser,
+    verifyEmail
 } = require("../middlewares/auth.middleware");
 
 const router = express.Router();
 
 /*******************************************************************
  * @desc                Register a new Restaurateur user
- * @route               POST /auth/register/restaurateur
+ * @route               POST /api/auth/register/restaurateur
  * @access              Public
  *******************************************************************/
-router.route('/auth/register/restaurateur').post(registerAsRestaurateur);
+router.post('/auth/register/restaurateur', registerAsRestaurateur);
 
 /*******************************************************************
  * @desc                Register a new Producteur user
- * @route               POST /auth/register/restaurateur
+ * @route               POST /api/auth/register/producteur
  * @access              Public
  *******************************************************************/
-router.route('/auth/register/producteur').post(registerAsProducteur);
+router.post('/auth/register/producteur', registerAsProducteur);
 
 /*******************************************************************
  * @desc                Login user (both restaurateur and producteur)
- * @route               POST /auth/login
+ * @route               POST /api/auth/login
  * @access              Public
  *******************************************************************/
-router.route('/auth/login').post(validatePassword, login);
+router.post('/auth/login', validatePassword, login);
 
 /*******************************************************************
  * @desc                Logout a user
- * @route               POST /auth/log-out
+ * @route               POST /api/auth/logout
  * @access              Public
  *******************************************************************/
-router.route('/auth/logout').post(logout);
+router.post('/auth/logout', logout);
 
 /*******************************************************************
  * @desc                Get current logged-in user's data
- * @route               GET /auth/me
+ * @route               GET /api/auth/me
  * @access              Private
  *******************************************************************/
-router.route('/auth/me').get(protectWithToken, verifyAndGetUser);
+router.get('/auth/me', protectWithToken, verifyAndGetUser);
+
+/*******************************************************************
+ * @desc                Verify user email
+ * @route               GET /api/auth/verify-email
+ * @access              Public
+ *******************************************************************/
+router.get('/auth/verify-email', verifyEmail);
+
+/*******************************************************************
+ * @desc                resend user verification email
+ * @route               GET /api/auth/resendVerificationEmail
+ * @access              Public
+ *******************************************************************/
+router.post('/auth/resend-verification', resendVerificationEmail);
+
+/*******************************************************************
+ * @desc                Check if user is verified
+ * @route               GET /api/auth/check-verification
+ * @access              Private
+ *******************************************************************/
+router.get('/auth/check-verification', protectWithToken, (req, res, next) => {
+    const user = req.user; // This is populated by the protectWithToken middleware
+
+    // Send the verification status
+    res.status(200).json({
+        success: true,
+        isVerified: user.isVerified
+    });
+});
+
+/*******************************************************************
+ * @desc                Check if user is verified
+ * @route               GET /api/auth/check-verification
+ * @access              Private
+ *******************************************************************/
+router.get('/verify-email/:token', verifyEmail);
 
 
 module.exports = router;

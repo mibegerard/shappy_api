@@ -2,8 +2,10 @@ const express = require("express");
 const router = express.Router();
 
 // Import middleware
-const { protectWithToken, ensureProducteurRole } = require("../middlewares/auth.middleware");
-const uploadImageMiddleware = require('../middlewares/uploadImage.middleware'); // Middleware for file upload
+const { protectWithToken, ensureProducteurRole, verifyUser } = require("../middlewares/auth.middleware");
+const uploadImageMiddleware = require('../middlewares/uploadImage.middleware');
+
+
 
 // Import controller functions
 const {
@@ -17,12 +19,16 @@ const {
 
 /*******************************************************************
  * @desc                Create a product
- * @route               POST product/create
- * @access              Private (Producteurs only)
+ * @route               POST /product/create
+ * @access              Private (Producteurs only, Verified users)
  *******************************************************************/
-router.post('/product/create', protectWithToken, ensureProducteurRole, uploadImageMiddleware("image"), createProduct);
-
-
+router.post('/product/create', 
+    protectWithToken,        // Authenticate user
+    verifyUser,              // Ensure email is verified
+    ensureProducteurRole,    // Ensure the user is a "producteur"
+    uploadImageMiddleware("image"), 
+    createProduct
+);
 /*******************************************************************
  * @desc                Get all products with optional filtering and pagination
  * @route               GET /products
@@ -47,16 +53,26 @@ router.get('/product/name/:name', getProductByName);
 /*******************************************************************
  * @desc                Update a product by ID
  * @route               PUT /product/:id
- * @access              Private (Producteurs only)
+ * @access              Private (Producteurs only, Verified users)
  *******************************************************************/
-router.put('/product/:id', protectWithToken, uploadImageMiddleware("image"), updateProductById);
+router.put('/product/:id', 
+    protectWithToken,        // Authenticate user
+    verifyUser,              // Ensure email is verified
+    ensureProducteurRole,    // Ensure the user is a "producteur"
+    uploadImageMiddleware("image"), 
+    updateProductById
+);
 
 /*******************************************************************
  * @desc                Delete a product by ID
  * @route               DELETE /product/:id
- * @access              Private (Producteurs only)
+ * @access              Private (Producteurs only, Verified users)
  *******************************************************************/
-router.delete('/product/:id', protectWithToken, deleteProductById);
-
+router.delete('/product/:id', 
+    protectWithToken,        // Authenticate user
+    verifyUser,              // Ensure email is verified
+    ensureProducteurRole,    // Ensure the user is a "producteur"
+    deleteProductById
+);
 
 module.exports = router;
