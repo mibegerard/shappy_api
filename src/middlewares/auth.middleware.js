@@ -4,6 +4,7 @@ const { verifyJwt } = require('../helper/jwt.helper');
 const { jwtSign } = require('../helper/jwt.helper');
 const ProducteurUserModel = require("../models/producteur.model");
 const RestaurateurUserModel = require("../models/restaurateur.model");
+const CartModel = require("../models/cart.model");
 const crypto = require('crypto');
 // Helper function to get the user model based on role
 const getUserModel = (role) => {
@@ -122,7 +123,7 @@ exports.verifyEmail = asyncHandler(async (req, res, next) => {
 
 
     // Dynamically assign the user's role for token creation
-    const authToken = jwtSign({ id: user._id, role: user.role });
+    const authToken = jwtSign({ id: user._id, role: user.role, isVerified: user.isVerified, });
     console.log("Generated JWT token for user:", user.email);
 
     // Redirect to home page with token if `redirect` parameter is present
@@ -135,23 +136,26 @@ exports.verifyEmail = asyncHandler(async (req, res, next) => {
         success: true,
         message: "Email verified successfully",
         token: authToken,
+        cart
     });
 });
 
-// Middleware to ensure the user is verified
 exports.verifyUser = (req, res, next) => {
     const user = req.user; // This should be populated by your authentication middleware
 
+    console.log('User in verifyUser middleware:', user);
+    console.log('User in verifyUser middleware:', user.isVerified);
+
     // Check if user is verified
     if (!user.isVerified) {
-        console.log(`User verification failed for user ID: ${user.id}`);
+        console.log(`User verification failed for user IDs: ${user.isVerified}`);
         return next(new ErrorResponse('User is not verified. Please check your email for verification.', 403));
     }
 
-    console.log(`User verification failed for user ID: ${user.id}`);
-
+    console.log(`User verification passed for user ID: ${user.id}`);
     next();
 };
+
 
 
 
@@ -164,8 +168,10 @@ exports.protectWithToken = asyncHandler(async (req, res, next) => {
     // Retrieve token from cookies or authorization header
     if (req?.cookies?.token) {
         token = req.cookies.token;
+        console.log('Token retrieved from cookies:', token); // Debugging log
     } else if (req?.headers?.authorization && req?.headers?.authorization.startsWith('Bearer')) {
         token = req.headers.authorization.split(' ')[1];
+        console.log('Token retrieved from Authorization header:', token); // Debugging log
     }
 
     // If no token found, return an authentication error
@@ -178,17 +184,29 @@ exports.protectWithToken = asyncHandler(async (req, res, next) => {
 
     // Handle expired tokens
     if (expired) {
+        console.log('Token has expired'); // Debugging log
         return next(new ErrorResponse('Le token d\'accès a expiré, veuillez vous reconnecter', 401));
     }
 
     // Handle valid tokens
     if (verifiedToken) {
         req.user = verifiedToken;
-        console.log('Authenticated User:', req.user); // Optional: Replace with proper logging in production
+        console.log('Authenticated User:', req.user); // Log the entire user object
+        console.log('User ID:', req.user.id); // Debugging log for user ID
+        console.log('User Verified:', req.user.isVerified); // Log the isVerified field
+        
+        // Check if 'isVerified' is present and valid
+        if (req.user.isVerified === undefined) {
+            console.log('isVerified is undefined in the user object');
+        } else {
+            console.log('User is verified:', req.user.isVerified); // Log isVerified value
+        }
+        
         return next();
     }
 
     // If token is invalid, return an error
+    console.log('Invalid token'); // Debugging log for invalid token
     return next(new ErrorResponse('Le token d\'accès n\'est pas correct, vous devez vous authentifier', 401));
 });
 
@@ -249,11 +267,44 @@ async function verifyHeaderToken(req, next, paramToken = null) {
     return verifiedToken
 }
 
-// Middleware to ensure the user is a producteur
 exports.ensureProducteurRole = (req, res, next) => {
     if (req.user.role !== 'producteur') {
-        return next(new ErrorResponse('Unauthorized access', 403));
+        return next(new ErrorResponse('Désolé, vous devez être un producteur pour accéder à cette fonctionnalité.', 403));
     }
     next();
 };
 
+
+exports.ensureRestaurateurRole = (req, res, next) => {
+    if (req.user.role !== 'restaurateur') {
+        return next(new ErrorResponse('Désolé, vous devez être un restaurateur pour accéder à cette fonctionnalité.', 403));
+    }
+    next();
+};
+
+exports.checkEmailVerificationStatus = asyncHandler(async (req, res, next) => {
+    const { email } = req.body;
+
+    if (!email) {
+        return next(new ErrorResponse('Email is required', 400));
+    }
+
+    // Find the user model by email
+    const UserModel = await getUserModelByEmail(email);
+
+    if (!UserModel) {
+        return res.status(200).json({ exists: false });
+    }
+
+    // Retrieve user data
+    const user = await UserModel.findOne({ email });
+
+    if (user) {
+        return res.status(200).json({
+            exists: true,
+            isVerified: user.isVerified,
+        });
+    }
+
+    return res.status(200).json({ exists: false });
+});

@@ -1,4 +1,3 @@
-// models/product.model.js
 const mongoose = require("mongoose");
 
 const productSchema = new mongoose.Schema(
@@ -9,7 +8,7 @@ const productSchema = new mongoose.Schema(
         category: { type: String, required: true },
         quantity: { type: Number, required: true },
         unit: { type: String, required: true },
-        image: { type: String, required: true },  // New field for image URL or path
+        image: { type: String, required: true },
         producteur: { 
             type: mongoose.Schema.Types.ObjectId, 
             ref: "Producteur", 

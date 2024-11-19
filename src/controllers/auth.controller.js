@@ -259,8 +259,12 @@ exports.login = asyncHandler(async (req, res, next) => {
             return next(new ErrorResponse('User is not verified. Please check your email for verification.', 403));
         }
 
-        // Generate JWT token
-        const token = jwtSign({ id: user._id, role: user.role });
+        // Generate JWT token with isVerified included
+        const token = jwtSign({ 
+            id: user._id, 
+            role: user.role, 
+            isVerified: user.isVerified // Include isVerified in the payload
+        });
 
         // Send response with token and user details
         res.status(200).json({

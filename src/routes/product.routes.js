@@ -23,9 +23,9 @@ const {
  * @access              Private (Producteurs only, Verified users)
  *******************************************************************/
 router.post('/product/create', 
-    protectWithToken,        // Authenticate user
-    verifyUser,              // Ensure email is verified
-    ensureProducteurRole,    // Ensure the user is a "producteur"
+    protectWithToken,                     
+    ensureProducteurRole,
+    verifyUser,    
     uploadImageMiddleware("image"), 
     createProduct
 );
@@ -56,9 +56,9 @@ router.get('/product/name/:name', getProductByName);
  * @access              Private (Producteurs only, Verified users)
  *******************************************************************/
 router.put('/product/:id', 
-    protectWithToken,        // Authenticate user
-    verifyUser,              // Ensure email is verified
-    ensureProducteurRole,    // Ensure the user is a "producteur"
+    protectWithToken,                 
+    ensureProducteurRole,
+    verifyUser,
     uploadImageMiddleware("image"), 
     updateProductById
 );
@@ -69,9 +69,9 @@ router.put('/product/:id',
  * @access              Private (Producteurs only, Verified users)
  *******************************************************************/
 router.delete('/product/:id', 
-    protectWithToken,        // Authenticate user
-    verifyUser,              // Ensure email is verified
-    ensureProducteurRole,    // Ensure the user is a "producteur"
+    protectWithToken,         
+    ensureProducteurRole,
+    verifyUser,    
     deleteProductById
 );
 
