@@ -10,7 +10,8 @@ const {
     validatePassword,
     protectWithToken,
     verifyAndGetUser,
-    verifyEmail
+    verifyEmail,
+    checkEmailVerificationStatus
 } = require("../middlewares/auth.middleware");
 
 const router = express.Router();
@@ -69,15 +70,7 @@ router.post('/auth/resend-verification', resendVerificationEmail);
  * @route               GET /api/auth/check-verification
  * @access              Private
  *******************************************************************/
-router.get('/auth/check-verification', protectWithToken, (req, res, next) => {
-    const user = req.user; // This is populated by the protectWithToken middleware
-
-    // Send the verification status
-    res.status(200).json({
-        success: true,
-        isVerified: user.isVerified
-    });
-});
+router.post('/auth/verification-status', checkEmailVerificationStatus);
 
 /*******************************************************************
  * @desc                Check if user is verified
