@@ -2,17 +2,18 @@ const mongoose = require("mongoose");
 const bcrypt = require("bcryptjs");
 const crypto = require("crypto");
 
-
 const producteurUserSchema = new mongoose.Schema(
     {
         firstName: { type: String, required: true },
         lastName: { type: String, required: true },
-        commune: { type: String, required: true },
+        city: { type: String, required: true },
         postalCode: { type: String, required: true },
-        telephone: { type: String, required: true },
+        phoneNumber: { type: String, required: true },
         email: { type: String, required: true, unique: true },
         role: { type: String, required: true, enum: ["producteur"], default: "producteur" },
         password: { type: String, required: true },
+        profilePicture: { type: String, default: ''},
+        description: {type: String, default: '' },
         emailVerificationToken: { type: String, default: null },
         tokenExpiry: { type: Date, default: null },
         isVerified: { type: Boolean, default: false }

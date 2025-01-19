@@ -7,7 +7,7 @@ const {
     getAllProducteurs,
     getProducteurByProperty,
     deleteProducteurById,
-    updateProducteurByProperty
+    updateProducteurByProperty,
 } = require("../controllers/partners.controller");
 const { protectWithToken } = require("../middlewares/auth.middleware");
 
@@ -68,5 +68,7 @@ router.route('/producteurs/:id').delete(protectWithToken, deleteProducteurById);
  * @access              Private
  *******************************************************************/
 router.route('/producteurs/update').put(protectWithToken, updateProducteurByProperty);
+
+
 
 module.exports = router;

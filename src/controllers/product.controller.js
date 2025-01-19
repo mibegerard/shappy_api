@@ -72,7 +72,7 @@ exports.getAllProducts = asyncHandler(async (req, res, next) => {
 
     // Pagination options
     const products = await ProductModel.find(query)
-        .populate('producteur', 'firstName lastName commune postalCode telephone')
+        .populate('producteur', 'firstName lastName city postalCode telephone')
         .sort(sortOptions)
         .skip((page - 1) * limit)
         .limit(Number(limit));
@@ -96,7 +96,7 @@ exports.getAllProducts = asyncHandler(async (req, res, next) => {
  *******************************************************************/
 exports.getProductById = asyncHandler(async (req, res, next) => {
     const product = await ProductModel.findById(req.params.id)
-        .populate('producteur', 'firstName lastName commune postalCode telephone');
+        .populate('producteur', 'firstName lastName city postalCode telephone');
 
     if (!product) {
         return next(new ErrorResponse('Product not found', 404));
@@ -115,7 +115,7 @@ exports.getProductById = asyncHandler(async (req, res, next) => {
  *******************************************************************/
 exports.getProductByName = asyncHandler(async (req, res, next) => {
     const product = await ProductModel.findOne({ name: req.params.name })
-        .populate('producteur', 'firstName lastName commune postalCode telephone');
+        .populate('producteur', 'firstName lastName city postalCode telephone');
 
     if (!product) {
         return next(new ErrorResponse('Product not found', 404));
@@ -148,7 +148,7 @@ exports.updateProductById = asyncHandler(async (req, res, next) => {
     product = await ProductModel.findByIdAndUpdate(req.params.id, updates, {
         new: true,
         runValidators: true,
-    }).populate('producteur', 'firstName lastName commune postalCode telephone'); // Ensure populated fields
+    }).populate('producteur', 'firstName lastName city postalCode telephone'); // Ensure populated fields
 
     res.status(200).json({
         success: true,
@@ -162,16 +162,81 @@ exports.updateProductById = asyncHandler(async (req, res, next) => {
  * @access  Private (Producteurs only)
  *******************************************************************/
 exports.deleteProductById = asyncHandler(async (req, res, next) => {
+    console.log(`Attempting to delete product with ID: ${req.params.id}`);
+
     const product = await ProductModel.findById(req.params.id);
 
-    if (!product || product.producteur.toString() !== req.user.id.toString()) {
-        return next(new ErrorResponse('Product not found or unauthorized', 404));
+    if (!product) {
+        console.error(`Product with ID: ${req.params.id} not found`);
+        return next(new ErrorResponse('Product not found', 404));
     }
 
-    await product.remove();
+    if (product.producteur.toString() !== req.user.id.toString()) {
+        console.error(`Unauthorized attempt to delete product with ID: ${req.params.id} by user ID: ${req.user.id}`);
+        return next(new ErrorResponse('Unauthorized', 403));
+    }
+
+    await ProductModel.deleteOne({ _id: req.params.id });
+    console.log(`Product with ID: ${req.params.id} successfully deleted`);
 
     res.status(200).json({
         success: true,
         data: {}
+    });
+});
+
+/*******************************************************************
+ * @desc                Update current product by a property
+ * @Method              PUT
+ * @URL                 /api/products/update/:id
+ * @access              Private
+ *******************************************************************/
+exports.updateProduct = asyncHandler(async (req, res, next) => {
+    const productId = req.params.id;
+    const { property, updateData } = req.body;
+
+    // Log incoming data for debugging
+    console.log('Incoming Request:', req.body);
+
+    if (!productId) {
+        return next(new ErrorResponse('Product ID is required', 400));
+    }
+
+    if (!property || !updateData) {
+        return next(new ErrorResponse('Property and update data are required', 400));
+    }
+
+    // Log the property and updateData being used for the update
+    console.log(`Updating product's ${property} with data:`, updateData);
+
+    // Construct the update query dynamically
+    const updateQuery = { _id: productId };
+
+    // Prepare dynamic update payload
+    const updatePayload = { [property]: updateData };
+
+    // Log the update query and payload before executing the update
+    console.log('Update Query:', updateQuery);
+    console.log('Update Payload:', updatePayload);
+
+    // Perform the update with the correct payload structure
+    const product = await ProductModel.findOneAndUpdate(updateQuery, updatePayload, {
+        new: true,
+        runValidators: true,
+    });
+
+    if (!product) {
+        return next(
+            new ErrorResponse(`No product found with ID = ${productId}`, 404)
+        );
+    }
+
+    // Log the updated product data
+    console.log('Updated Product:', product);
+
+    // Send the response with the updated data
+    res.status(200).json({
+        success: true,
+        data: product,
     });
 });

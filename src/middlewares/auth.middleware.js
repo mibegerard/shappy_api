@@ -236,6 +236,13 @@ exports.verifyAndGetUser = asyncHandler(async (req, res, next) => {
             email: user.email,
             isVerified: user.isVerified,
             role: verifiedToken.role,
+            city: user.city,
+            phoneNumber: user.phoneNumber,
+            postalCode: user.postalCode,
+            profilePicture: user.profilePicture,
+            description: user.description,
+            restaurantName: user.restaurantName,
+            restaurantAddress: user.restaurantAddress,
         };
 
         // Step 5: Respond with the user data
