@@ -14,6 +14,8 @@ const restaurateurUserSchema = new mongoose.Schema(
         password: { type: String, required: true },
         restaurantName: { type: String, required: true },
         restaurantAddress: { type: String, required: true },
+        profilePicture: { type: String, default: ''},
+        description: {type: String, default: '' },
         isVerified: { type: Boolean, default: false },
         emailVerificationToken: { type: String, default: null },
         tokenExpiry: { type: Date, default: null }, // Added token expiry field

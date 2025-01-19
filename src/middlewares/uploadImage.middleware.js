@@ -40,11 +40,16 @@ const upload = multer({
 
 // Custom middleware to handle upload errors and dynamic field names
 const uploadImageMiddleware = (fieldName) => (req, res, next) => {
+    console.log(`Upload middleware triggered for field: ${fieldName}`);
     const multerUpload = upload.single(fieldName);
+    
     multerUpload(req, res, (err) => {
         if (err) {
+            console.error('File upload error:', err.message);
             return next(new ErrorResponse(`File upload error: ${err.message}`, 500));
         }
+        
+        console.log('File uploaded successfully:', req.file);
         next();
     });
 };

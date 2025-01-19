@@ -120,9 +120,9 @@ exports.registerAsProducteur = asyncHandler(async (req, res, next) => {
         password, 
         firstName, 
         lastName, 
-        commune,
+        city,
         postalCode, 
-        telephone, 
+        phoneNumber, 
         products 
     } = req.body;
 
@@ -139,9 +139,9 @@ exports.registerAsProducteur = asyncHandler(async (req, res, next) => {
             password,
             firstName,
             lastName,
-            commune,
+            city,
             postalCode,
-            telephone,
+            phoneNumber,
             products
         });
 

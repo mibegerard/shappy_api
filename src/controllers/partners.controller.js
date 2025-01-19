@@ -89,6 +89,7 @@ exports.updateRestaurateurByProperty = asyncHandler(async (req, res, next) => {
     });
 });
 
+
 /*******************************************************************
  * @desc                Get all producteurs
  * @Method              GET

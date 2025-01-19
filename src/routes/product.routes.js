@@ -14,7 +14,8 @@ const {
     getProductById,
     getProductByName,
     updateProductById,
-    deleteProductById
+    deleteProductById,
+    updateProduct
 } = require('../controllers/product.controller');
 
 /*******************************************************************
@@ -61,6 +62,18 @@ router.put('/product/:id',
     verifyUser,
     uploadImageMiddleware("image"), 
     updateProductById
+);
+
+/*******************************************************************
+ * @desc                Update a specific property of the current product
+ * @route               PUT /product/update/:id
+ * @access              Private (Producteurs only, Verified users)
+ *******************************************************************/
+router.put('/product/update/:id', 
+    protectWithToken,                 
+    ensureProducteurRole,
+    verifyUser,
+    updateProduct
 );
 
 /*******************************************************************
