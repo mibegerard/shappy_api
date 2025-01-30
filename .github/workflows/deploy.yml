@@ -1,0 +1,45 @@
+name: Deploy Shappy to VPS
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build:
+    name: 🐳 Build
+    uses: ./.github/workflows/build.yml
+    secrets: inherit
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: 🧑‍💻 SSH to VPS and Deploy Docker Image
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.VPS_IP }}
+          username: ${{ secrets.VPS_USERNAME }}
+          password: ${{ secrets.VPS_PASSWORD }}
+          script: |
+            # Arrêter et supprimer les conteneurs existants
+            docker stop $(docker ps -aq) || true
+            docker rm $(docker ps -aq) || true
+
+            # Nettoyer les anciennes images et conteneurs inutilisés
+            docker system prune -af || true
+            
+            # Tirer la dernière image depuis Docker Hub
+            docker pull ${{ secrets.DOCKER_HUB_USERNAME }}/shappy_api_app:latest
+
+            # Créer un dossier pour le fichier .env (si nécessaire)
+            mkdir -p /home/shappy
+
+            # Ajouter le fichier .env au VPS
+            echo "${{ secrets.ENV_FILE_CONTENT }}" > /home/shappy/.env
+            
+            # Lancer un nouveau conteneur avec l'image tirée et le fichier .env
+            docker run -d --name shappy_api_app_container \
+              --env-file /home/shappy/.env \
+              -p 8000:8000 \
+              ${{ secrets.DOCKER_HUB_USERNAME }}/shappy_api_app:latest
