@@ -2,9 +2,12 @@ name: Deploy Shappy to VPS
 
 on:
   push:
-    branches:
-      - main
+    branches: [ main ]
 
+permissions:
+  actions: write  # Allows cancel-workflow-action to cancel runs
+  contents: read  # Allows checkout action to read the repository
+  
 jobs:
   build:
     name: 🐳 Build
