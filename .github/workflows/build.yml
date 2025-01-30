@@ -6,6 +6,7 @@ on:
 
 permissions:
   actions: write  # Allows cancel-workflow-action to cancel runs
+  contents: read  # Allows checkout action to read the repository
 
 jobs:
   build:
