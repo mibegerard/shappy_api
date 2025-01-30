@@ -1,5 +1,6 @@
 services:
   app:
+    image: shappy_api_app
     build: .
     ports:
       - "8000:8000"
@@ -7,6 +8,7 @@ services:
       - .env
     depends_on:
       - mongo
+    container_name: shappy_api_app_container
 
   mongo:
     image: mongo:4.4
