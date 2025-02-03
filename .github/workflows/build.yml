@@ -5,7 +5,7 @@ on:
     branches: [ main ]
   workflow_call: # Ajout du déclencheur workflow_call
     secrets: 
-      GITHUB_TOKEN: 
+      MY_GITHUB_TOKEN: 
         required: true
       DOCKER_HUB_USERNAME: 
         required: true
