@@ -3,6 +3,14 @@ name: 🐳 Build and Push Docker Image
 on:
   push:
     branches: [ main ]
+  workflow_call: # Ajout du déclencheur workflow_call
+    secrets: 
+      GITHUB_TOKEN: 
+        required: true
+      DOCKER_HUB_USERNAME: 
+        required: true
+      DOCKERHUB_TOKEN: 
+        required: true
 
 permissions:
   actions: write  # Allows cancel-workflow-action to cancel runs
