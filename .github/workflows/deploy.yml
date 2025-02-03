@@ -9,6 +9,15 @@ permissions:
   contents: read  # Allows checkout action to read the repository
   
 jobs:
+  check-environment:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Vérifier l'environnement
+        run: |
+          echo "Vérification de l'environnement de déploiement"
+          docker --version
+          node --version
+          npm --version
 
   deploy:
     needs: build
