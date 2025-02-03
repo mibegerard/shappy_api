@@ -1,8 +1,10 @@
 name: Deploy Shappy to VPS
 
 on:
-  push:
-    branches: [ main ]
+  workflow_run:
+    workflows: ["🐳 Build and Push Docker Image"]
+    types:
+      - completed
 
 permissions:
   actions: write  # Allows cancel-workflow-action to cancel runs
@@ -20,7 +22,6 @@ jobs:
           npm --version
 
   deploy:
-    needs: build
     runs-on: ubuntu-latest
     steps:
       - name: 🧑‍💻 SSH to VPS and Deploy Docker Image
