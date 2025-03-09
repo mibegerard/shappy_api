@@ -13,6 +13,9 @@ const app = express();
 const port = process.env.PORT || 3000;  // Default port if not defined
 const origin = process.env.ORIGIN;
 const origin1 = process.env.ORIGIN_1;
+const origin2 = process.env.ORIGIN_2;
+const origin3 = process.env.ORIGIN_3;
+const origin4 = process.env.ORIGIN_4;
 
 // ------------------------------------ middlewares -----------------------------------------
 app.use(express.json());
@@ -20,7 +23,13 @@ app.use(cookieParser());
 app.set('trust proxy', true);
 
 // CORS configuration
-const allowedOrigins = [process.env.ORIGIN, process.env.ORIGIN_1];
+const allowedOrigins = [
+    process.env.ORIGIN, 
+    process.env.ORIGIN_1,
+    process.env.ORIGIN_2,
+    process.env.ORIGIN_3,
+    process.env.ORIGIN_4
+];
 
 app.use((req, res, next) => {
     const origin = req.headers.origin;
