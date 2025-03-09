@@ -15,7 +15,6 @@ const origin = process.env.ORIGIN;
 const origin1 = process.env.ORIGIN_1;
 const origin2 = process.env.ORIGIN_2;
 const origin3 = process.env.ORIGIN_3;
-const origin4 = process.env.ORIGIN_4;
 
 // ------------------------------------ middlewares -----------------------------------------
 app.use(express.json());
@@ -27,8 +26,7 @@ const allowedOrigins = [
     process.env.ORIGIN, 
     process.env.ORIGIN_1,
     process.env.ORIGIN_2,
-    process.env.ORIGIN_3,
-    process.env.ORIGIN_4
+    process.env.ORIGIN_3
 ];
 
 app.use((req, res, next) => {
