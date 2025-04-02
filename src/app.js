@@ -10,7 +10,7 @@ const cookieParser = require("cookie-parser");
 
 // ------------------------------------ constants -------------------------------------------
 const app = express();
-const port = process.env.PORT || 3000; // Default port if not defined
+const port = process.env.PORT || 3000;
 
 // Filter out undefined origins
 const allowedOrigins = [
@@ -18,6 +18,7 @@ const allowedOrigins = [
     process.env.ORIGIN_1,
     process.env.ORIGIN_2,
     process.env.ORIGIN_3,
+    process.env.ORIGIN_4,
 ].filter(Boolean);
 
 // ------------------------------------ middlewares -----------------------------------------
