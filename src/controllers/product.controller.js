@@ -24,6 +24,8 @@ exports.createProduct = asyncHandler(async (req, res, next) => {
     // Debugging: Log the authenticated user object
     console.log('Authenticated User11:', req.user);
     console.log('Producteur ID to be set:', req.user.id);
+
+    // Create the product in the database
     const product = new ProductModel({
         name,
         description,
@@ -31,15 +33,34 @@ exports.createProduct = asyncHandler(async (req, res, next) => {
         category,
         quantity,
         unit,
-        image: req.file.path,  // Store the image path
+        image: req.file.path, // Store the image path
         producteur: req.user.id,
     });
-    console.log('Product to be saved:', product);
+
+    // Create a Stripe product and price
+    try {
+        const stripeProduct = await stripe.products.create({
+            name: product.name,
+            images: [product.image],
+        });
+
+        const stripePrice = await stripe.prices.create({
+            unit_amount: Math.round(product.price * 100), // Convert price to cents
+            currency: 'eur',
+            product: stripeProduct.id,
+        });
+
+        // Save the Stripe priceId to the product
+        product.priceId = stripePrice.id;
+    } catch (error) {
+        return next(new ErrorResponse('Error creating Stripe product or price', 500));
+    }
+
     await product.save();
 
     res.status(201).json({
         success: true,
-        data: product
+        data: product,
     });
 });
 
@@ -279,8 +300,5 @@ const updateProductsWithPriceId = async () => {
         console.log('All products updated successfully.');
     } catch (error) {
         console.error('Error updating products with priceId:', error);
-        process.exit(1);
     }
 };
-
-updateProductsWithPriceId();

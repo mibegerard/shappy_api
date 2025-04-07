@@ -466,7 +466,7 @@ exports.createStripeCheckoutSession = async (req, res, next) => {
             return_url: `${secureOrigin}/return?session_id={CHECKOUT_SESSION_ID}`,
         });
 
-        res.status(200).send({ sessionId: session.id });
+        res.status(200).json({ success: true, sessionId: session.id });
     } catch (error) {
         console.error("Error creating Stripe Checkout session:", error);
         res.status(500).send({ error: error.message || "Failed to create checkout session" });
