@@ -300,5 +300,9 @@ const updateProductsWithPriceId = async () => {
         console.log('All products updated successfully.');
     } catch (error) {
         console.error('Error updating products with priceId:', error);
+    } finally {
+        // Déconnexion de la base de données
+        await mongoose.disconnect();
+        console.log('Disconnected from the database.');
     }
 };
