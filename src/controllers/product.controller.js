@@ -1,3 +1,5 @@
+const mongoose = require('mongoose');
+const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 const ProductModel = require("../models/product.model");
 const ErrorResponse = require("../helper/errorResponse");
 const asyncHandler = require("../helper/asyncHandler");
@@ -240,3 +242,45 @@ exports.updateProduct = asyncHandler(async (req, res, next) => {
         data: product,
     });
 });
+
+const updateProductsWithPriceId = async () => {
+    try {
+        // Connexion à la base de données
+        await mongoose.connect(process.env.DB_URI, {
+            useNewUrlParser: true,
+            useUnifiedTopology: true,
+        });
+
+        console.log('Connected to the database.');
+
+        // Récupérer tous les produits
+        const products = await ProductModel.find();
+
+        for (const product of products) {
+            const stripeProduct = await stripe.products.create({
+                name: product.name,
+                images: [product.image],
+            });
+
+            // Créer un objet de prix Stripe
+            const stripePrice = await stripe.prices.create({
+                unit_amount: Math.round(product.price * 100),
+                currency: 'eur',
+                product: stripeProduct.id,
+            });
+
+            // Mettez à jour le produit avec le priceId
+            product.priceId = stripePrice.id;
+            await product.save();
+
+            console.log(`Updated product ${product.name} with priceId: ${stripePrice.id}`);
+        }
+
+        console.log('All products updated successfully.');
+    } catch (error) {
+        console.error('Error updating products with priceId:', error);
+        process.exit(1);
+    }
+};
+
+updateProductsWithPriceId();

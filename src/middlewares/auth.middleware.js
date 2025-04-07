@@ -69,8 +69,15 @@ exports.verifyEmail = asyncHandler(async (req, res, next) => {
     const { token, redirect } = req.query;
     const email = req.body.email || req.query.email;
 
-    console.log("Incoming email:", email);
-    console.log("Incoming token (URL):", token);
+    const origin = req.headers.origin || 'https://shappy.pro';
+    // Forcer HTTPS si l'origine est en HTTP
+    const secureOrigin = origin.startsWith('http://') ? origin.replace('http://', 'https://') : origin;
+
+    console.log("Origin:", origin);
+    console.log("Secure Origin:", secureOrigin);
+    console.log("Redirect URL:", redirect);
+    console.log("Incoming request URL:", req.originalUrl);
+    console.log("Incoming request user email:", req.user?.email);
 
     if (!email) {
         return next(new ErrorResponse("Email is required", 400));
@@ -129,7 +136,19 @@ exports.verifyEmail = asyncHandler(async (req, res, next) => {
     // Redirect to home page with token if `redirect` parameter is present
     if (redirect) {
         console.log("Redirecting user to home page with token.");
-        return res.redirect(`${process.env.ORIGIN}?token=${authToken}`);
+        const allowedOrigins = process.env.ALLOWED_ORIGINS.split(',');
+        const origin = req.headers.origin || process.env.ORIGIN;
+
+        // Debugging logs for origin and allowed origins
+        console.log('Request origin:', origin);
+        console.log('Allowed origins:', allowedOrigins);
+
+        if (allowedOrigins.includes(secureOrigin)) {
+            return res.redirect(`${secureOrigin}?token=${authToken}`);
+        } else {
+            return next(new ErrorResponse('Origin not allowed', 403));
+            
+        }
     }
 
     res.status(200).json({

@@ -1,5 +1,6 @@
 const express = require("express");
 const router = express.Router();
+const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
 
 // Import middleware
 const { protectWithToken, ensureRestaurateurRole, verifyUser } = require("../middlewares/auth.middleware");
@@ -15,6 +16,8 @@ const {
     clearCart,
     getTotalPrice,
     checkoutCart,
+    createStripeCheckoutSession,
+    getStripeSessionStatus,
 } = require('../controllers/cart.controller');
 
 /*******************************************************************
@@ -79,5 +82,31 @@ router.get('/cart/:user_id/total', protectWithToken, ensureRestaurateurRole, ver
  * @access              Private (Restaurateurs only, Verified users)
  *******************************************************************/
 router.post('/cart/:user_id/checkout', protectWithToken, ensureRestaurateurRole, verifyUser, checkoutCart);
+
+/*******************************************************************
+ * @desc                Get Stripe Checkout session status
+ * @route               GET /cart/session-status
+ * @access              Private (Restaurateurs only, Verified users)
+ *******************************************************************/
+router.get(
+    '/cart/stripe/session-status',
+    protectWithToken,
+    ensureRestaurateurRole,
+    verifyUser,
+    getStripeSessionStatus
+);
+
+/*******************************************************************
+ * @desc                Create a Stripe Checkout session
+ * @route               POST /cart/checkout-session
+ * @access              Private (Restaurateurs only, Verified users)
+ *******************************************************************/
+router.post(
+    '/cart/stripe/checkout-session',
+    protectWithToken,
+    ensureRestaurateurRole,
+    verifyUser,
+    createStripeCheckoutSession
+);
 
 module.exports = router;

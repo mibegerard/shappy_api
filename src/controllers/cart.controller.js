@@ -1,5 +1,6 @@
 const CartModel = require("../models/cart.model");
 const ProductModel = require("../models/product.model");
+const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
 const RestaurateurUserModel = require("../models/restaurateur.model");
 const ErrorResponse = require("../helper/errorResponse");
 const asyncHandler = require("../helper/asyncHandler");
@@ -343,5 +344,131 @@ exports.checkoutCart = async (req, res) => {
     } catch (error) {
         console.error("Error processing checkout:", error);
         res.status(500).json({ message: "Error processing checkout", error });
+    }
+};
+
+/*******************************************************************
+ * @desc                Get Stripe Checkout session status
+ * @route               GET /cart/stripe/session-status
+ * @access              Private (Restaurateurs only, Verified users)
+ *******************************************************************/
+exports.getStripeSessionStatus = async (req, res) => {
+    try {
+        const { session_id } = req.query;
+
+        if (!session_id) {
+            return res.status(400).send({ error: "Session ID is required" });
+        }
+
+        const session = await stripe.checkout.sessions.retrieve(session_id);
+
+        console.log("Stripe session details:", session);
+        res.status(200).send({
+            status: session.status,
+            customer_email: session.customer_details.email,
+            session_id: session.id,
+            payment_status: session.payment_status,
+            amount_total: session.amount_total,
+            currency: session.currency,
+            created: session.created,
+            expires_at: session.expires_at,
+            payment_intent: session.payment_intent,
+            url: session.url,
+        });
+    } catch (error) {
+        if (error.type === "StripeInvalidRequestError") {
+            return res.status(400).send({ error: "Invalid session ID" });
+        }
+        console.error("Error retrieving Stripe session status:", error);
+        res.status(500).send({ error: "Failed to retrieve session status" });
+    }    
+};
+
+/*******************************************************************
+ * @desc                Create a Stripe Checkout session
+ * @route               POST /cart/stripe/checkout-session
+ * @access              Private (Restaurateurs only, Verified users)
+ *******************************************************************/
+exports.createStripeCheckoutSession = async (req, res, next) => {
+    try {
+        const origin = req.headers.origin || process.env.ORIGIN || 'https://localhost:3000';
+
+        // Force HTTPS if the origin is in HTTP
+        const secureOrigin = origin.startsWith('http://') ? origin.replace('http://', 'https://') : origin;
+
+        console.log('Request origin:', origin);
+        console.log('Secure origin:', secureOrigin);
+
+        const allowedOrigins = [process.env.ORIGIN, 'https://localhost:3000'];
+        if (!allowedOrigins.includes(secureOrigin)) {
+            return next(new ErrorResponse('Origin not allowed', 403));
+        }
+
+        const { items, email } = req.body;
+
+        console.log("Received items:", items);
+        console.log("Received email:", email);
+        
+
+        console.log("User email:", email);
+
+        if (!items || !Array.isArray(items) || items.length === 0) {
+            return res.status(400).json({ message: "Invalid items array" });
+        }
+
+        if (!email) {
+            return res.status(400).json({ message: "User email is required" });
+        }
+
+        // Validate and map items
+        const lineItems = await Promise.all(
+            items.map(async (item, index) => {
+                // Check if the product ID is present in the correct field
+                const productId = item._id || item.product; // Support both `_id` and `product` fields
+                if (!productId) {
+                    throw new ErrorResponse(`Product ID is missing for item at index ${index}`, 400);
+                }
+
+                // Log the full object of item for debugging
+                console.log("Item object:", item);
+                console.log("Product Object:", productId);
+
+                // Retrieve the product from the database
+                const product = await ProductModel.findById(productId);
+                if (!product || !product.priceId) {
+                    throw new ErrorResponse(`Product with ID ${productId} not found or missing priceId`, 400);
+                }
+
+                return {
+                    price: product.priceId, // Use the Stripe price ID
+                    quantity: item.quantity || 1,
+                };
+            })
+        );
+
+        // Add a fixed delivery fee of 5 EUR
+        lineItems.push({
+            price_data: {
+                currency: 'eur',
+                product_data: {
+                    name: 'Livraison',
+                },
+                unit_amount: 500, // 5 EUR in cents
+            },
+            quantity: 1,
+        });
+
+        const session = await stripe.checkout.sessions.create({
+            line_items: lineItems,
+            ui_mode: 'embedded',
+            mode: 'payment',
+            customer_email: email,
+            return_url: `${secureOrigin}/return?session_id={CHECKOUT_SESSION_ID}`,
+        });
+
+        res.status(200).send({ sessionId: session.id });
+    } catch (error) {
+        console.error("Error creating Stripe Checkout session:", error);
+        res.status(500).send({ error: error.message || "Failed to create checkout session" });
     }
 };

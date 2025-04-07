@@ -1,7 +1,9 @@
+const https = require("https");
+const fs = require("fs");
 const express = require("express");
+const cors = require("cors");
 const path = require("path");
 require("dotenv").config({ path: path.resolve(__dirname, "../.env") });
-const fs = require("fs");
 const mongoose = require("mongoose");
 const logger = require("./helper/logger");
 const catchError = require("./helper/catchError");
@@ -12,6 +14,12 @@ const cookieParser = require("cookie-parser");
 const app = express();
 const port = process.env.PORT || 3000;
 
+// Load SSL certificates
+const sslOptions = {
+    key: fs.readFileSync(path.resolve(__dirname, "../localhost-key.pem")),
+    cert: fs.readFileSync(path.resolve(__dirname, "../localhost.pem")),
+};
+
 // Filter out undefined origins
 const allowedOrigins = [
     process.env.ORIGIN,
@@ -19,6 +27,7 @@ const allowedOrigins = [
     process.env.ORIGIN_2,
     process.env.ORIGIN_3,
     process.env.ORIGIN_4,
+    process.env.ORIGIN_5
 ].filter(Boolean);
 
 // ------------------------------------ middlewares -----------------------------------------
@@ -26,27 +35,29 @@ app.use(express.json());
 app.use(cookieParser());
 app.set("trust proxy", true);
 
-// CORS configuration
+// Redirect HTTP to HTTPS
 app.use((req, res, next) => {
-    const origin = req.headers.origin;
-    if (origin && allowedOrigins.includes(origin)) {
-        res.setHeader("Access-Control-Allow-Origin", origin);
-    } else if (!origin) {
-        return res.status(403).json({ message: "CORS policy does not allow this origin" });
-    }
-    res.setHeader("Access-Control-Allow-Credentials", "true");
-    res.setHeader("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
-    res.setHeader(
-        "Access-Control-Allow-Headers",
-        "Origin, X-Requested-With, Content-Type, Accept, Authorization"
-    );
-
-    // Handle preflight requests
-    if (req.method === "OPTIONS") {
-        return res.sendStatus(200);
+    if (!req.secure) {
+        return res.redirect(`https://${req.headers.host}${req.url}`);
     }
     next();
 });
+
+// Improved CORS configuration using the `cors` middleware
+const corsOptions = {
+    origin: (origin, callback) => {
+        if (!origin || allowedOrigins.includes(origin)) {
+            callback(null, true);
+        } else {
+            callback(new Error("CORS policy does not allow this origin"));
+        }
+    },
+    credentials: true,
+    methods: "GET, POST, PUT, DELETE, OPTIONS",
+    allowedHeaders: "Origin, X-Requested-With, Content-Type, Accept, Authorization",
+};
+
+app.use(cors(corsOptions));
 
 // ------------------------------------ dynamic routes ---------------------------------------
 const routesDirPath = path.join(__dirname, "routes");
@@ -72,8 +83,8 @@ mongoose
     .then(async () => {
         logger.info("DB connected");
 
-        app.listen(port, async () => {
-            logger.info(`App is running at http://localhost:${port}`);
+        https.createServer(sslOptions, app).listen(port, async () => {
+            logger.info(`App is running at https://localhost:${port}`);
             swaggerDocs(app, port);
         });
     })
