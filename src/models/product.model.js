@@ -14,6 +14,7 @@ const productSchema = new mongoose.Schema(
             ref: "Producteur", 
             required: true 
         },
+        priceId: { type: String },
     },
     {
         timestamps: true,

@@ -63,14 +63,10 @@ exports.validatePassword = asyncHandler(async (req, res, next) => {
         return next(new ErrorResponse('Error during password validation', 500));
     }
 });
-
 // Middleware to verify email
 exports.verifyEmail = asyncHandler(async (req, res, next) => {
     const { token, redirect } = req.query;
     const email = req.body.email || req.query.email;
-
-    console.log("Incoming email:", email);
-    console.log("Incoming token (URL):", token);
 
     if (!email) {
         return next(new ErrorResponse("Email is required", 400));
@@ -80,63 +76,81 @@ exports.verifyEmail = asyncHandler(async (req, res, next) => {
         return next(new ErrorResponse("Token is required", 400));
     }
 
-    // Hash the token sent via email
+    const origin = req.headers.origin || 'https://shappy.pro';
+    const secureOrigin = origin.startsWith('http://') ? origin.replace('http://', 'https://') : origin;
+
+    console.log("Origin:", origin);
+    console.log("Secure Origin:", secureOrigin);
+    console.log("Redirect URL:", redirect);
+    console.log("Incoming request URL:", req.originalUrl);
+
+    // Hash the token received in query params
     const hashedToken = crypto.createHash("sha256").update(token).digest("hex");
 
-    // Get the user model by email
+    // Dynamically get the appropriate user model based on email
     const userModel = await getUserModelByEmail(email);
-    
     if (!userModel) {
         console.log("User model not found for email:", email);
         return next(new ErrorResponse("Invalid or expired token", 400));
     }
 
-    // Find the user by the hashed token
-
-    const user = await userModel.findOne({ 
-        email
-    });
+    // Look up the user by email
+    const user = await userModel.findOne({ email });
+    if (!user) {
+        console.log("User not found for email:", email);
+        return next(new ErrorResponse("Invalid or expired token", 400));
+    }
 
     // Debugging logs
     console.log("Incoming token (URL):", token);
     console.log("Hashed token (URL):", hashedToken);
-    if (user) {
-        console.log("User found for verification:", user.email);
-        console.log("Stored token in DB:", user.emailVerificationToken);
-        console.log("Token expiry in DB:", user.tokenExpiry);
-        console.log("Current time:", Date.now());
-    } else {
-        console.log("User not found with the provided token.");
-        return next(new ErrorResponse("Invalided or expired token", 400));
+    console.log("Stored token in DB:", user.emailVerificationToken);
+    console.log("Token expiry in DB:", user.tokenExpiry);
+    console.log("Current time:", Date.now());
+
+    // Check if token matches and hasn't expired
+    if (user.emailVerificationToken !== hashedToken) {
+        console.log("Token mismatch for user:", user.email);
+        return next(new ErrorResponse("Invalid or expired token", 400));
     }
 
-    // Check if the token has expired
     if (user.tokenExpiry < Date.now()) {
         console.log("Token has expired for user:", user.email);
         return next(new ErrorResponse("Token has expired", 400));
     }
 
+    // Mark email as verified and clear token fields
     user.isVerified = true;
-    user.emailVerificationToken = null; // Clear the token
-    user.tokenExpiry = null; // Clear the token expiry
+    user.emailVerificationToken = null;
+    user.tokenExpiry = null;
     await user.save();
 
+    // Generate a JWT token for the verified user
+    const authToken = jwtSign({
+        id: user._id,
+        role: user.role,
+        isVerified: user.isVerified,
+    });
 
-    // Dynamically assign the user's role for token creation
-    const authToken = jwtSign({ id: user._id, role: user.role, isVerified: user.isVerified, });
     console.log("Generated JWT token for user:", user.email);
 
-    // Redirect to home page with token if `redirect` parameter is present
+    // Handle optional redirection
     if (redirect) {
-        console.log("Redirecting user to home page with token.");
-        return res.redirect(`${process.env.ORIGIN}?token=${authToken}`);
+        const allowedOrigins = process.env.ALLOWED_ORIGINS?.split(',') || [];
+        console.log('Allowed origins:', allowedOrigins);
+        if (allowedOrigins.includes(secureOrigin)) {
+            console.log("Redirecting to:", `${secureOrigin}?token=${authToken}`);
+            return res.redirect(`${secureOrigin}?token=${authToken}`);
+        } else {
+            return next(new ErrorResponse('Origin not allowed', 403));
+        }
     }
 
+    // Default response if not redirecting
     res.status(200).json({
         success: true,
         message: "Email verified successfully",
         token: authToken,
-        cart
     });
 });
 

@@ -1,3 +1,5 @@
+const mongoose = require('mongoose');
+const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 const ProductModel = require("../models/product.model");
 const ErrorResponse = require("../helper/errorResponse");
 const asyncHandler = require("../helper/asyncHandler");
@@ -22,6 +24,8 @@ exports.createProduct = asyncHandler(async (req, res, next) => {
     // Debugging: Log the authenticated user object
     console.log('Authenticated User11:', req.user);
     console.log('Producteur ID to be set:', req.user.id);
+
+    // Create the product in the database
     const product = new ProductModel({
         name,
         description,
@@ -29,15 +33,34 @@ exports.createProduct = asyncHandler(async (req, res, next) => {
         category,
         quantity,
         unit,
-        image: req.file.path,  // Store the image path
+        image: req.file.path, // Store the image path
         producteur: req.user.id,
     });
-    console.log('Product to be saved:', product);
+
+    // Create a Stripe product and price
+    try {
+        const stripeProduct = await stripe.products.create({
+            name: product.name,
+            images: [product.image],
+        });
+
+        const stripePrice = await stripe.prices.create({
+            unit_amount: Math.round(product.price * 100), // Convert price to cents
+            currency: 'eur',
+            product: stripeProduct.id,
+        });
+
+        // Save the Stripe priceId to the product
+        product.priceId = stripePrice.id;
+    } catch (error) {
+        return next(new ErrorResponse('Error creating Stripe product or price', 500));
+    }
+
     await product.save();
 
     res.status(201).json({
         success: true,
-        data: product
+        data: product,
     });
 });
 
@@ -240,3 +263,46 @@ exports.updateProduct = asyncHandler(async (req, res, next) => {
         data: product,
     });
 });
+
+const updateProductsWithPriceId = async () => {
+    try {
+        // Connexion à la base de données
+        await mongoose.connect(process.env.DB_URI, {
+            useNewUrlParser: true,
+            useUnifiedTopology: true,
+        });
+
+        console.log('Connected to the database.');
+
+        // Récupérer tous les produits
+        const products = await ProductModel.find();
+
+        for (const product of products) {
+            const stripeProduct = await stripe.products.create({
+                name: product.name,
+                images: [product.image],
+            });
+
+            // Créer un objet de prix Stripe
+            const stripePrice = await stripe.prices.create({
+                unit_amount: Math.round(product.price * 100),
+                currency: 'eur',
+                product: stripeProduct.id,
+            });
+
+            // Mettez à jour le produit avec le priceId
+            product.priceId = stripePrice.id;
+            await product.save();
+
+            console.log(`Updated product ${product.name} with priceId: ${stripePrice.id}`);
+        }
+
+        console.log('All products updated successfully.');
+    } catch (error) {
+        console.error('Error updating products with priceId:', error);
+    } finally {
+        // Déconnexion de la base de données
+        await mongoose.disconnect();
+        console.log('Disconnected from the database.');
+    }
+};
