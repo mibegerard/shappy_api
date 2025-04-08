@@ -13,12 +13,16 @@ const cookieParser = require("cookie-parser");
 // ------------------------------------ constants -------------------------------------------
 const app = express();
 const port = process.env.PORT || 3000;
+const isProduction = process.env.NODE_ENV === "production";
 
-// Load SSL certificates
-const sslOptions = {
-    key: fs.readFileSync(path.resolve(__dirname, "../localhost-key.pem")),
-    cert: fs.readFileSync(path.resolve(__dirname, "../localhost.pem")),
-};
+// Optional HTTPS certificates for local dev
+let sslOptions = {};
+if (!isProduction) {
+    sslOptions = {
+        key: fs.readFileSync(path.resolve(__dirname, "../localhost-key.pem")),
+        cert: fs.readFileSync(path.resolve(__dirname, "../localhost.pem")),
+    };
+}
 
 // Filter out undefined origins
 const allowedOrigins = [
@@ -32,22 +36,23 @@ const allowedOrigins = [
 
 // ------------------------------------ middlewares -----------------------------------------
 app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 app.set("trust proxy", true);
 
-// Redirect HTTP to HTTPS
-app.use((req, res, next) => {
-    if (!req.secure) {
-        return res.redirect(`https://${req.headers.host}${req.url}`);
-    }
-    console.log("Incoming request origin:", req.headers.origin);
-    next();
-});
+// Remove HTTPS redirect logic for production (handled by Railway or reverse proxy)
+if (!isProduction) {
+    app.use((req, res, next) => {
+        if (!req.secure) {
+            return res.redirect(`https://${req.headers.host}${req.url}`);
+        }
+        next();
+    });
+}
 
-// Improved CORS configuration using the `cors` middleware
+// Improved CORS configuration
 const corsOptions = {
     origin: (origin, callback) => {
-        console.log("CORS request from origin:", origin);
         if (!origin || allowedOrigins.includes(origin)) {
             callback(null, true);
         } else {
@@ -55,7 +60,7 @@ const corsOptions = {
         }
     },
     credentials: true,
-    methods: "GET, POST, PUT, DELETE, OPTIONS",
+    methods: "GET,POST,PUT,DELETE,OPTIONS",
     allowedHeaders: "Origin, X-Requested-With, Content-Type, Accept, Authorization",
 };
 
@@ -64,8 +69,6 @@ app.options("*", cors(corsOptions));
 
 // ------------------------------------ dynamic routes ---------------------------------------
 const routesDirPath = path.join(__dirname, "routes");
-
-// Dynamically load routes
 fs.readdirSync(routesDirPath).forEach((file) => {
     const filePath = path.join(routesDirPath, file);
     if (fs.statSync(filePath).isFile()) {
@@ -86,10 +89,17 @@ mongoose
     .then(async () => {
         logger.info("DB connected");
 
-        https.createServer(sslOptions, app).listen(port, async () => {
-            logger.info(`App is running at https://localhost:${port}`);
-            swaggerDocs(app, port);
-        });
+        if (!isProduction) {
+            https.createServer(sslOptions, app).listen(port, () => {
+                logger.info(`App is running at https://localhost:${port}`);
+                swaggerDocs(app, port);
+            });
+        } else {
+            app.listen(port, () => {
+                logger.info(`Production app running at port ${port}`);
+                swaggerDocs(app, port);
+            });
+        }
     })
     .catch(() => {
         logger.error("Could not connect to db");
