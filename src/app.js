@@ -46,6 +46,7 @@ app.use((req, res, next) => {
 // Improved CORS configuration using the `cors` middleware
 const corsOptions = {
     origin: (origin, callback) => {
+        console.log("CORS request from origin:", origin);
         if (!origin || allowedOrigins.includes(origin)) {
             callback(null, true);
         } else {
@@ -56,6 +57,7 @@ const corsOptions = {
     methods: "GET, POST, PUT, DELETE, OPTIONS",
     allowedHeaders: "Origin, X-Requested-With, Content-Type, Accept, Authorization",
 };
+console.log("CORS request from origin:", origin);
 
 app.use(cors(corsOptions));
 
