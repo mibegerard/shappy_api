@@ -40,6 +40,7 @@ app.use((req, res, next) => {
     if (!req.secure) {
         return res.redirect(`https://${req.headers.host}${req.url}`);
     }
+    console.log("Incoming request origin:", req.headers.origin);
     next();
 });
 
@@ -59,6 +60,7 @@ const corsOptions = {
 };
 
 app.use(cors(corsOptions));
+app.options("*", cors(corsOptions));
 
 // ------------------------------------ dynamic routes ---------------------------------------
 const routesDirPath = path.join(__dirname, "routes");
