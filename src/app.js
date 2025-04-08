@@ -57,7 +57,6 @@ const corsOptions = {
     methods: "GET, POST, PUT, DELETE, OPTIONS",
     allowedHeaders: "Origin, X-Requested-With, Content-Type, Accept, Authorization",
 };
-console.log("CORS request from origin:", origin);
 
 app.use(cors(corsOptions));
 
