@@ -22,49 +22,38 @@ if (process.env.NODE_ENV === "development") {
     };
 }
 
-// Filter out undefined origins
+// ------------------------------------ middlewares -----------------------------------------
+app.use(express.json());
+app.use(cookieParser());
+app.set('trust proxy', true);
+
+// CORS configuration
 const allowedOrigins = [
-    process.env.ORIGIN,
+    process.env.ORIGIN, 
     process.env.ORIGIN_1,
     process.env.ORIGIN_2,
     process.env.ORIGIN_3,
     process.env.ORIGIN_4,
     process.env.ORIGIN_5,
-    "https://shappy.pro",
-    "https://shappy.netlify.app",
-].filter(Boolean);
-
-// ------------------------------------ middlewares -----------------------------------------
-app.use(express.json());
-app.use(cookieParser());
-app.set("trust proxy", true);
-
-
-// Improved CORS configuration
-const corsOptions = {
-    origin: true,
-    credentials: true,
-    methods: "GET, POST, PUT, DELETE, OPTIONS",
-    allowedHeaders: "Origin, X-Requested-With, Content-Type, Accept, Authorization",
-};
-
-
-// Explicitly handle preflight requests
-app.use(cors(corsOptions));
-
-app.options("*", (req, res) => {
-    res.setHeader("Access-Control-Allow-Origin", req.headers.origin || "*");
-    res.setHeader("Access-Control-Allow-Methods", "GET,POST,PUT,DELETE,OPTIONS");
-    res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
-    res.setHeader("Access-Control-Allow-Credentials", "true");
-    res.sendStatus(204);
-});
+];
 
 app.use((req, res, next) => {
-    logger.info(`${req.method} ${req.originalUrl} Headers: ${JSON.stringify(req.headers)}`);
-    logger.info(`Allowed Origins: ${JSON.stringify(allowedOrigins)}`);
-    next();
+    const origin = req.headers.origin;
+    if (allowedOrigins.includes(origin)) {
+        res.setHeader('Access-Control-Allow-Origin', origin);
+    }
+    res.setHeader('Access-Control-Allow-Credentials', 'true');
+    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+    res.setHeader('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization');
+
+    // Handle preflight requests
+    if (req.method === 'OPTIONS') {
+        res.sendStatus(200);
+    } else {
+        next();
+    }
 });
+
 
 // ------------------------------------ dynamic routes ---------------------------------------
 const routesDirPath = path.join(__dirname, "routes");
@@ -85,17 +74,21 @@ app.use((err, req, res, next) => {
 // ------------------------------------ start server -----------------------------------------
 const dbUri = process.env.DB_URI;
 
-mongoose
-    .connect(dbUri)
-    .then(async () => {
-        logger.info("DB connected");
+mongoose.connect(dbUri).then(async () => {
+    logger.info("DB connected");
 
+    if (process.env.NODE_ENV === "development" && sslOptions) {
         https.createServer(sslOptions, app).listen(port, async () => {
-            logger.info(`App is running at https://localhost:${port}`);
+            logger.info(`App is running securely at https://localhost:${port}`);
             swaggerDocs(app, port);
         });
-    })
-    .catch(() => {
-        logger.error("Could not connect to db");
-        process.exit(1);
-    });
+    } else {
+        app.listen(port, async () => {
+            logger.info(`App is running at http://localhost:${port}`);
+            swaggerDocs(app, port);
+        });
+    }
+}).catch(() => {
+    logger.error("Could not connect to db");
+    process.exit(1);
+});
