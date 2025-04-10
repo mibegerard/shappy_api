@@ -29,7 +29,9 @@ const allowedOrigins = [
     process.env.ORIGIN_2,
     process.env.ORIGIN_3,
     process.env.ORIGIN_4,
-    process.env.ORIGIN_5
+    process.env.ORIGIN_5,
+    "https://shappy.pro",
+    "https://shappy.netlify.app",
 ].filter(Boolean);
 
 // ------------------------------------ middlewares -----------------------------------------
@@ -60,6 +62,7 @@ app.options("*", (req, res) => {
 
 app.use((req, res, next) => {
     logger.info(`${req.method} ${req.originalUrl} Headers: ${JSON.stringify(req.headers)}`);
+    logger.info(`Allowed Origins: ${JSON.stringify(allowedOrigins)}`);
     next();
 });
 
