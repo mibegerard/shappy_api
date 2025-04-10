@@ -59,7 +59,7 @@ app.options("*", (req, res) => {
 });
 
 app.use((req, res, next) => {
-    logger.info(`${req.method} ${req.originalUrl} ${JSON.stringify(req.body)} Headers: ${JSON.stringify(req.headers)}`);
+    logger.info(`${req.method} ${req.originalUrl} Headers: ${JSON.stringify(req.headers)}`);
     next();
 });
 
