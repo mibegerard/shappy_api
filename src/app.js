@@ -40,18 +40,10 @@ app.set("trust proxy", true);
 
 // Improved CORS configuration
 const corsOptions = {
-    origin: (origin, callback) => {
-        if (!origin || allowedOrigins.includes(origin)) {
-            callback(null, true);
-        } else {
-            callback(new Error("CORS policy does not allow this origin"));
-        }
-    },
+    origin: true,
     credentials: true,
     methods: "GET, POST, PUT, DELETE, OPTIONS",
     allowedHeaders: "Origin, X-Requested-With, Content-Type, Accept, Authorization",
-    preflightContinue: false, // Ensure preflight requests are handled automatically
-    optionsSuccessStatus: 204, // Use 204 for successful preflight responses
 };
 
 app.use(cors(corsOptions));
