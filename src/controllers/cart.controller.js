@@ -188,6 +188,72 @@ exports.addProductToCart = async (req, res) => {
     }
 };
 
+// Add a product to the cart
+exports.addProductToCartFromDetails = async (req, res) => {
+    try {
+        const { user_id } = req.params;
+        const { productId, quantity } = req.body;
+
+        // Validation de base
+        if (!productId || !quantity || quantity < 1) {
+            return res.status(400).json({ message: "Invalid productId or quantity" });
+        }
+
+        console.log(`Adding product ${productId} (quantity: ${quantity}) to cart for restaurateur: ${user_id}`);
+
+        // Vérifier si le restaurateur existe
+        const restaurateur = await RestaurateurUserModel.findById(user_id);
+        if (!restaurateur) {
+            console.error(`Restaurateur not found: ${user_id}`);
+            return res.status(404).json({ message: "Restaurateur not found" });
+        }
+
+        // Vérifier si le produit existe
+        const product = await ProductModel.findById(productId);
+        if (!product) {
+            console.error(`Product not found: ${productId}`);
+            return res.status(404).json({ message: "Product not found" });
+        }
+
+        // Vérifier si le panier existe, sinon en créer un nouveau
+        let cart = await CartModel.findOne({ restaurateur: user_id });
+        if (!cart) {
+            cart = new CartModel({ restaurateur: user_id, products: [], totalPrice: 0 });
+        }
+
+        // Trouver si le produit est déjà dans le panier
+        const existingProductIndex = cart.products.findIndex(item => item.product.toString() === productId);
+
+        if (existingProductIndex > -1) {
+            // Si le produit existe déjà dans le panier, mettre à jour uniquement la quantité et le totalPrice
+            cart.products[existingProductIndex].quantity = quantity; // Remplacer par la nouvelle quantité
+            cart.products[existingProductIndex].totalPrice = quantity * product.price;
+            console.log(`Updated quantity of product ${productId} in cart for restaurateur: ${user_id}`);
+        } else {
+            // Si le produit n'existe pas dans le panier, l'ajouter
+            cart.products.push({
+                product: productId,
+                quantity,
+                price: product.price,
+                totalPrice: product.price * quantity
+            });
+            console.log(`Added new product ${productId} to cart for restaurateur: ${user_id}`);
+        }
+
+        // Recalculer le prix total du panier
+        cart.totalPrice = cart.products.reduce((total, item) => total + item.totalPrice, 0);
+
+        // Sauvegarder le panier mis à jour
+        await cart.save();
+        console.log(`Cart updated successfully for restaurateur: ${user_id}`);
+
+        // Retourner le panier mis à jour
+        res.status(200).json(cart);
+    } catch (error) {
+        console.error("Error adding product to cart:", error);
+        res.status(500).json({ message: "Error adding product to cart", error });
+    }
+};
 
 // Update product quantity in the cart
 exports.updateProductQuantity = async (req, res) => {

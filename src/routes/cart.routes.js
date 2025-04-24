@@ -18,6 +18,7 @@ const {
     checkoutCart,
     createStripeCheckoutSession,
     getStripeSessionStatus,
+    addProductToCartFromDetails
 } = require('../controllers/cart.controller');
 
 /*******************************************************************
@@ -47,6 +48,13 @@ router.get('/cart/:user_id/product/:product_id', protectWithToken, ensureRestaur
  * @access              Private (Restaurateurs only, Verified users)
  *******************************************************************/
 router.post('/cart/:user_id/product', protectWithToken, ensureRestaurateurRole, verifyUser, addProductToCart);
+
+/*******************************************************************
+ * @desc                Add a product to the cart From Product Details
+ * @route               POST /cart/:user_id/product
+ * @access              Private (Restaurateurs only, Verified users)
+ *******************************************************************/
+router.post('/cart/:user_id/productDetails', protectWithToken, ensureRestaurateurRole, verifyUser, addProductToCartFromDetails);
 
 /*******************************************************************
  * @desc                Update product quantity in the cart
