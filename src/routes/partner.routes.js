@@ -13,62 +13,154 @@ const { protectWithToken } = require("../middlewares/auth.middleware");
 
 const router = express.Router();
 
-/*******************************************************************
- * @desc                Get all restaurateurs
- * @route               GET /api/restaurateurs
- * @access              Public
- *******************************************************************/
+/**
+ * @swagger
+ * /api/restaurateurs:
+ *   get:
+ *     summary: Récupérer tous les restaurateurs
+ *     tags:
+ *       - Partenaires
+ *     responses:
+ *       200:
+ *         description: Liste des restaurateurs récupérée
+ */
 router.route('/restaurateurs').get(getAllRestaurateurs);
 
-/*******************************************************************
- * @desc                Get restaurateur by a property
- * @route               GET /api/restaurateurs/find
- * @access              Public
- *******************************************************************/
+/**
+ * @swagger
+ * /api/restaurateurs/find:
+ *   get:
+ *     summary: Rechercher un restaurateur par propriété
+ *     tags:
+ *       - Partenaires
+ *     parameters:
+ *       - in: query
+ *         name: property
+ *         schema:
+ *           type: string
+ *         description: "Propriété à rechercher (ex: email, nom, etc.)"
+ *     responses:
+ *       200:
+ *         description: Restaurateur trouvé
+ */
 router.route('/restaurateurs/find').get(getRestaurateurByProperty);
 
-/*******************************************************************
- * @desc                Delete restaurateur by ID
- * @route               DELETE /api/restaurateurs/:id
- * @access              Private
- *******************************************************************/
+/**
+ * @swagger
+ * /api/restaurateurs/{id}:
+ *   delete:
+ *     summary: Supprimer un restaurateur par ID
+ *     tags:
+ *       - Partenaires
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: ID du restaurateur
+ *     responses:
+ *       200:
+ *         description: Restaurateur supprimé
+ */
 router.route('/restaurateurs/:id').delete(protectWithToken, deleteRestaurateurById);
 
-/*******************************************************************
- * @desc                Update restaurateur by a property
- * @route               PUT /api/restaurateurs/update
- * @access              Private
- *******************************************************************/
+/**
+ * @swagger
+ * /api/restaurateurs/update:
+ *   put:
+ *     summary: Mettre à jour un restaurateur par propriété
+ *     tags:
+ *       - Partenaires
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *     responses:
+ *       200:
+ *         description: Restaurateur mis à jour
+ */
 router.route('/restaurateurs/update').put(protectWithToken, updateRestaurateurByProperty);
 
-/*******************************************************************
- * @desc                Get all producteurs
- * @route               GET /api/producteurs
- * @access              Public
- *******************************************************************/
+/**
+ * @swagger
+ * /api/producteurs:
+ *   get:
+ *     summary: Récupérer tous les producteurs
+ *     tags:
+ *       - Partenaires
+ *     responses:
+ *       200:
+ *         description: Liste des producteurs récupérée
+ */
 router.route('/producteurs').get(getAllProducteurs);
 
-/*******************************************************************
- * @desc                Get producteur by a property
- * @route               GET /api/producteurs/find
- * @access              Public
- *******************************************************************/
+/**
+ * @swagger
+ * /api/producteurs/find:
+ *   get:
+ *     summary: Rechercher un producteur par propriété
+ *     tags:
+ *       - Partenaires
+ *     parameters:
+ *       - in: query
+ *         name: property
+ *         schema:
+ *           type: string
+ *         description: "Propriété à rechercher (ex: email, nom, etc.)"
+ *     responses:
+ *       200:
+ *         description: Producteur trouvé
+ */
 router.route('/producteurs/find').get(getProducteurByProperty);
 
-/*******************************************************************
- * @desc                Delete producteur by ID
- * @route               DELETE /api/producteurs/:id
- * @access              Private
- *******************************************************************/
+/**
+ * @swagger
+ * /api/producteurs/{id}:
+ *   delete:
+ *     summary: Supprimer un producteur par ID
+ *     tags:
+ *       - Partenaires
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: ID du producteur
+ *     responses:
+ *       200:
+ *         description: Producteur supprimé
+ */
 router.route('/producteurs/:id').delete(protectWithToken, deleteProducteurById);
 
-/*******************************************************************
- * @desc                Update producteur by a property
- * @route               PUT /api/producteurs/update
- * @access              Private
- *******************************************************************/
+/**
+ * @swagger
+ * /api/producteurs/update:
+ *   put:
+ *     summary: Mettre à jour un producteur par propriété
+ *     tags:
+ *       - Partenaires
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *     responses:
+ *       200:
+ *         description: Producteur mis à jour
+ */
 router.route('/producteurs/update').put(protectWithToken, updateProducteurByProperty);
-
-
 
 module.exports = router;

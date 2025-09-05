@@ -16,68 +16,208 @@ const {
 
 const router = express.Router();
 
-/*******************************************************************
- * @desc                Register a new Restaurateur user
- * @route               POST /api/auth/register/restaurateur
- * @access              Public
- *******************************************************************/
+/**
+ * @swagger
+ * /api/auth/register/restaurateur:
+ *   post:
+ *     summary: Inscription d'un nouvel utilisateur restaurateur
+ *     tags:
+ *       - Auth
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               email:
+ *                 type: string
+ *               password:
+ *                 type: string
+ *               nom:
+ *                 type: string
+ *     responses:
+ *       201:
+ *         description: Utilisateur restaurateur créé
+ *       400:
+ *         description: Erreur de validation
+ */
 router.post('/auth/register/restaurateur', registerAsRestaurateur);
 
-/*******************************************************************
- * @desc                Register a new Producteur user
- * @route               POST /api/auth/register/producteur
- * @access              Public
- *******************************************************************/
+/**
+ * @swagger
+ * /api/auth/register/producteur:
+ *   post:
+ *     summary: Inscription d'un nouvel utilisateur producteur
+ *     tags:
+ *       - Auth
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               email:
+ *                 type: string
+ *               password:
+ *                 type: string
+ *               nom:
+ *                 type: string
+ *     responses:
+ *       201:
+ *         description: Utilisateur producteur créé
+ *       400:
+ *         description: Erreur de validation
+ */
 router.post('/auth/register/producteur', registerAsProducteur);
 
-/*******************************************************************
- * @desc                Login user (both restaurateur and producteur)
- * @route               POST /api/auth/login
- * @access              Public
- *******************************************************************/
+/**
+ * @swagger
+ * /api/auth/login:
+ *   post:
+ *     summary: Connexion utilisateur (restaurateur ou producteur)
+ *     tags:
+ *       - Auth
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               email:
+ *                 type: string
+ *               password:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Connexion réussie
+ *       401:
+ *         description: Identifiants invalides
+ */
 router.post('/auth/login', validatePassword, login);
 
-/*******************************************************************
- * @desc                Logout a user
- * @route               POST /api/auth/logout
- * @access              Public
- *******************************************************************/
+/**
+ * @swagger
+ * /api/auth/logout:
+ *   post:
+ *     summary: Déconnexion de l'utilisateur
+ *     tags:
+ *       - Auth
+ *     responses:
+ *       200:
+ *         description: Déconnexion réussie
+ */
 router.post('/auth/logout', logout);
 
-/*******************************************************************
- * @desc                Get current logged-in user's data
- * @route               GET /api/auth/me
- * @access              Private
- *******************************************************************/
+/**
+ * @swagger
+ * /api/auth/me:
+ *   get:
+ *     summary: Récupérer les informations de l'utilisateur connecté
+ *     tags:
+ *       - Auth
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Données utilisateur
+ *       401:
+ *         description: Non autorisé
+ */
 router.get('/auth/me', protectWithToken, verifyAndGetUser);
 
-/*******************************************************************
- * @desc                Verify user email
- * @route               GET /api/auth/verify-email
- * @access              Public
- *******************************************************************/
+/**
+ * @swagger
+ * /api/auth/verify-email:
+ *   get:
+ *     summary: Vérifier l'email de l'utilisateur
+ *     tags:
+ *       - Auth
+ *     parameters:
+ *       - in: query
+ *         name: token
+ *         schema:
+ *           type: string
+ *         required: true
+ *         description: Jeton de vérification
+ *     responses:
+ *       200:
+ *         description: Email vérifié
+ *       400:
+ *         description: Jeton invalide
+ */
 router.get('/auth/verify-email', verifyEmail);
 
-/*******************************************************************
- * @desc                resend user verification email
- * @route               GET /api/auth/resendVerificationEmail
- * @access              Public
- *******************************************************************/
+/**
+ * @swagger
+ * /api/auth/resend-verification:
+ *   post:
+ *     summary: Renvoyer l'email de vérification
+ *     tags:
+ *       - Auth
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               email:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Email de vérification renvoyé
+ *       400:
+ *         description: Erreur
+ */
 router.post('/auth/resend-verification', resendVerificationEmail);
 
-/*******************************************************************
- * @desc                Check if user is verified
- * @route               GET /api/auth/check-verification
- * @access              Private
- *******************************************************************/
+/**
+ * @swagger
+ * /api/auth/verification-status:
+ *   post:
+ *     summary: Vérifier le statut de vérification de l'utilisateur
+ *     tags:
+ *       - Auth
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               email:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Statut de vérification retourné
+ *       400:
+ *         description: Erreur
+ */
 router.post('/auth/verification-status', checkEmailVerificationStatus);
 
-/*******************************************************************
- * @desc                Check if user is verified
- * @route               GET /api/auth/check-verification
- * @access              Private
- *******************************************************************/
+/**
+ * @swagger
+ * /api/auth/verify-email/{token}:
+ *   get:
+ *     summary: Vérifier l'email via un token dans l'URL
+ *     tags:
+ *       - Auth
+ *     parameters:
+ *       - in: path
+ *         name: token
+ *         schema:
+ *           type: string
+ *         required: true
+ *         description: Jeton de vérification
+ *     responses:
+ *       200:
+ *         description: Email vérifié
+ *       400:
+ *         description: Jeton invalide
+ */
 router.get('/verify-email/:token', verifyEmail);
-
 
 module.exports = router;

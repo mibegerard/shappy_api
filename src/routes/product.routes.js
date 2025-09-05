@@ -5,8 +5,6 @@ const router = express.Router();
 const { protectWithToken, ensureProducteurRole, verifyUser } = require("../middlewares/auth.middleware");
 const uploadImageMiddleware = require('../middlewares/uploadImage.middleware');
 
-
-
 // Import controller functions
 const {
     createProduct,
@@ -18,11 +16,45 @@ const {
     updateProduct
 } = require('../controllers/product.controller');
 
-/*******************************************************************
- * @desc                Create a product
- * @route               POST /product/create
- * @access              Private (Producteurs only, Verified users)
- *******************************************************************/
+/**
+ * @swagger
+ * /api/product/create:
+ *   post:
+ *     summary: Créer un nouveau produit
+ *     tags:
+ *       - Produits
+ *     security:
+ *       - bearerAuth: []
+ *     consumes:
+ *       - multipart/form-data
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         multipart/form-data:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               name:
+ *                 type: string
+ *               description:
+ *                 type: string
+ *               price:
+ *                 type: number
+ *               quantity:
+ *                 type: integer
+ *               category:
+ *                 type: string
+ *               unit:
+ *                 type: string
+ *               image:
+ *                 type: string
+ *                 format: binary
+ *     responses:
+ *       201:
+ *         description: Produit créé
+ *       400:
+ *         description: Erreur de validation
+ */
 router.post('/product/create', 
     protectWithToken,                     
     ensureProducteurRole,
@@ -30,32 +62,110 @@ router.post('/product/create',
     uploadImageMiddleware("image"), 
     createProduct
 );
-/*******************************************************************
- * @desc                Get all products with optional filtering and pagination
- * @route               GET /products
- * @access              Public
- *******************************************************************/
+
+/**
+ * @swagger
+ * /api/products:
+ *   get:
+ *     summary: Récupérer tous les produits (avec filtres et pagination optionnels)
+ *     tags:
+ *       - Produits
+ *     responses:
+ *       200:
+ *         description: Liste des produits récupérée
+ */
 router.get('/products', getAllProducts);
 
-/*******************************************************************
- * @desc                Get a product by ID
- * @route               GET /product/:id
- * @access              Public
- *******************************************************************/
+/**
+ * @swagger
+ * /api/product/{id}:
+ *   get:
+ *     summary: Récupérer un produit par ID
+ *     tags:
+ *       - Produits
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: ID du produit
+ *     responses:
+ *       200:
+ *         description: Produit récupéré
+ *       404:
+ *         description: Produit non trouvé
+ */
 router.get('/product/:id', getProductById);
 
-/*******************************************************************
- * @desc                Get a product by name
- * @route               GET /product/name/:name
- * @access              Public
- *******************************************************************/
+/**
+ * @swagger
+ * /api/product/name/{name}:
+ *   get:
+ *     summary: Récupérer un produit par nom
+ *     tags:
+ *       - Produits
+ *     parameters:
+ *       - in: path
+ *         name: name
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Nom du produit
+ *     responses:
+ *       200:
+ *         description: Produit récupéré
+ *       404:
+ *         description: Produit non trouvé
+ */
 router.get('/product/name/:name', getProductByName);
 
-/*******************************************************************
- * @desc                Update a product by ID
- * @route               PUT /product/:id
- * @access              Private (Producteurs only, Verified users)
- *******************************************************************/
+/**
+ * @swagger
+ * /api/product/{id}:
+ *   put:
+ *     summary: Mettre à jour un produit par ID
+ *     tags:
+ *       - Produits
+ *     security:
+ *       - bearerAuth: []
+ *     consumes:
+ *       - multipart/form-data
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: ID du produit
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         multipart/form-data:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               name:
+ *                 type: string
+ *               description:
+ *                 type: string
+ *               price:
+ *                 type: number
+ *               quantity:
+ *                 type: integer
+ *               category:
+ *                 type: string
+ *               unit:
+ *                 type: string
+ *               image:
+ *                 type: string
+ *                 format: binary
+ *     responses:
+ *       200:
+ *         description: Produit mis à jour
+ *       404:
+ *         description: Produit non trouvé
+ */
 router.put('/product/:id', 
     protectWithToken,                 
     ensureProducteurRole,
@@ -64,11 +174,34 @@ router.put('/product/:id',
     updateProductById
 );
 
-/*******************************************************************
- * @desc                Update a specific property of the current product
- * @route               PUT /product/update/:id
- * @access              Private (Producteurs only, Verified users)
- *******************************************************************/
+/**
+ * @swagger
+ * /api/product/update/{id}:
+ *   put:
+ *     summary: Mettre à jour une propriété spécifique d'un produit
+ *     tags:
+ *       - Produits
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: ID du produit
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *     responses:
+ *       200:
+ *         description: Propriété du produit mise à jour
+ *       404:
+ *         description: Produit non trouvé
+ */
 router.put('/product/update/:id', 
     protectWithToken,                 
     ensureProducteurRole,
@@ -76,11 +209,28 @@ router.put('/product/update/:id',
     updateProduct
 );
 
-/*******************************************************************
- * @desc                Delete a product by ID
- * @route               DELETE /product/:id
- * @access              Private (Producteurs only, Verified users)
- *******************************************************************/
+/**
+ * @swagger
+ * /api/product/{id}:
+ *   delete:
+ *     summary: Supprimer un produit par ID
+ *     tags:
+ *       - Produits
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: ID du produit
+ *     responses:
+ *       200:
+ *         description: Produit supprimé
+ *       404:
+ *         description: Produit non trouvé
+ */
 router.delete('/product/:id', 
     protectWithToken,         
     ensureProducteurRole,

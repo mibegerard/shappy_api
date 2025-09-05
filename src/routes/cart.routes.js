@@ -2,10 +2,7 @@ const express = require("express");
 const router = express.Router();
 const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
 
-// Import middleware
 const { protectWithToken, ensureRestaurateurRole, verifyUser } = require("../middlewares/auth.middleware");
-
-// Import controller functions
 const {
     createCart,
     getCart,
@@ -21,81 +18,284 @@ const {
     addProductToCartFromDetails
 } = require('../controllers/cart.controller');
 
-/*******************************************************************
- * @desc                Create a new cart
- * @route               POST /cart/:user_id
- * @access              Private (Restaurateurs only, Verified users)
- *******************************************************************/
+/**
+ * @swagger
+ * /api/cart/{user_id}:
+ *   post:
+ *     summary: Créer un nouveau panier pour un utilisateur
+ *     tags:
+ *       - Panier
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: user_id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: ID de l'utilisateur restaurateur
+ *     responses:
+ *       201:
+ *         description: Panier créé
+ */
 router.post('/cart/:user_id', protectWithToken, ensureRestaurateurRole, verifyUser, createCart);
 
-/*******************************************************************
- * @desc                Get the cart details
- * @route               GET /cart/:user_id
- * @access              Private (Restaurateurs only, Verified users)
- *******************************************************************/
+/**
+ * @swagger
+ * /api/cart/{user_id}:
+ *   get:
+ *     summary: Récupérer le panier d'un utilisateur
+ *     tags:
+ *       - Panier
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: user_id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: ID de l'utilisateur restaurateur
+ *     responses:
+ *       200:
+ *         description: Détails du panier récupérés
+ */
 router.get('/cart/:user_id', protectWithToken, ensureRestaurateurRole, verifyUser, getCart);
 
-/*******************************************************************
- * @desc                Get the product in cart details
- * @route               GET /cart/:user_id/product/:product_id
- * @access              Private (Restaurateurs only, Verified users)
- *******************************************************************/
+/**
+ * @swagger
+ * /api/cart/{user_id}/product/{product_id}:
+ *   get:
+ *     summary: Récupérer les détails d'un produit dans le panier
+ *     tags:
+ *       - Panier
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: user_id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: ID de l'utilisateur restaurateur
+ *       - in: path
+ *         name: product_id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: ID du produit
+ *     responses:
+ *       200:
+ *         description: Détails du produit dans le panier
+ */
 router.get('/cart/:user_id/product/:product_id', protectWithToken, ensureRestaurateurRole, getProductDetailsInCart);
 
-/*******************************************************************
- * @desc                Add a product to the cart
- * @route               POST /cart/:user_id/product
- * @access              Private (Restaurateurs only, Verified users)
- *******************************************************************/
+/**
+ * @swagger
+ * /api/cart/{user_id}/product:
+ *   post:
+ *     summary: Ajouter un produit au panier
+ *     tags:
+ *       - Panier
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: user_id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: ID de l'utilisateur restaurateur
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               productId:
+ *                 type: string
+ *               quantity:
+ *                 type: integer
+ *     responses:
+ *       200:
+ *         description: Produit ajouté au panier
+ */
 router.post('/cart/:user_id/product', protectWithToken, ensureRestaurateurRole, verifyUser, addProductToCart);
 
-/*******************************************************************
- * @desc                Add a product to the cart From Product Details
- * @route               POST /cart/:user_id/product
- * @access              Private (Restaurateurs only, Verified users)
- *******************************************************************/
+/**
+ * @swagger
+ * /api/cart/{user_id}/productDetails:
+ *   post:
+ *     summary: Ajouter un produit au panier depuis la fiche produit
+ *     tags:
+ *       - Panier
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: user_id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: ID de l'utilisateur restaurateur
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               productId:
+ *                 type: string
+ *               quantity:
+ *                 type: integer
+ *     responses:
+ *       200:
+ *         description: Produit ajouté au panier depuis la fiche produit
+ */
 router.post('/cart/:user_id/productDetails', protectWithToken, ensureRestaurateurRole, verifyUser, addProductToCartFromDetails);
 
-/*******************************************************************
- * @desc                Update product quantity in the cart
- * @route               PUT /cart/:user_id/product
- * @access              Private (Restaurateurs only, Verified users)
- *******************************************************************/
+/**
+ * @swagger
+ * /api/cart/{user_id}/product:
+ *   put:
+ *     summary: Mettre à jour la quantité d'un produit dans le panier
+ *     tags:
+ *       - Panier
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: user_id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: ID de l'utilisateur restaurateur
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               productId:
+ *                 type: string
+ *               quantity:
+ *                 type: integer
+ *     responses:
+ *       200:
+ *         description: Quantité du produit mise à jour
+ */
 router.put('/cart/:user_id/product', protectWithToken, ensureRestaurateurRole, verifyUser, updateProductQuantity);
 
-/*******************************************************************
- * @desc                Remove a product from the cart
- * @route               DELETE /cart/:user_id/product/:product_id
- * @access              Private (Restaurateurs only, Verified users)
- *******************************************************************/
+/**
+ * @swagger
+ * /api/cart/{user_id}/product/{product_id}:
+ *   delete:
+ *     summary: Supprimer un produit du panier
+ *     tags:
+ *       - Panier
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: user_id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: ID de l'utilisateur restaurateur
+ *       - in: path
+ *         name: product_id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: ID du produit
+ *     responses:
+ *       200:
+ *         description: Produit supprimé du panier
+ */
 router.delete('/cart/:user_id/product/:product_id', protectWithToken, ensureRestaurateurRole, verifyUser, removeProductFromCart);
 
-/*******************************************************************
- * @desc                Clear the cart
- * @route               DELETE /cart/:user_id
- * @access              Private (Restaurateurs only, Verified users)
- *******************************************************************/
+/**
+ * @swagger
+ * /api/cart/{user_id}:
+ *   delete:
+ *     summary: Vider le panier
+ *     tags:
+ *       - Panier
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: user_id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: ID de l'utilisateur restaurateur
+ *     responses:
+ *       200:
+ *         description: Panier vidé
+ */
 router.delete('/cart/:user_id', protectWithToken, ensureRestaurateurRole, verifyUser, clearCart);
 
-/*******************************************************************
- * @desc                Get total price of the cart
- * @route               GET /cart/:user_id/total
- * @access              Private (Restaurateurs only, Verified users)
- *******************************************************************/
+/**
+ * @swagger
+ * /api/cart/{user_id}/total:
+ *   get:
+ *     summary: Obtenir le prix total du panier
+ *     tags:
+ *       - Panier
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: user_id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: ID de l'utilisateur restaurateur
+ *     responses:
+ *       200:
+ *         description: Prix total du panier
+ */
 router.get('/cart/:user_id/total', protectWithToken, ensureRestaurateurRole, verifyUser, getTotalPrice);
 
-/*******************************************************************
- * @desc                Checkout the cart (empty the cart after)
- * @route               POST /cart/:user_id/checkout
- * @access              Private (Restaurateurs only, Verified users)
- *******************************************************************/
+/**
+ * @swagger
+ * /api/cart/{user_id}/checkout:
+ *   post:
+ *     summary: Valider le panier (checkout)
+ *     tags:
+ *       - Panier
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: user_id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: ID de l'utilisateur restaurateur
+ *     responses:
+ *       200:
+ *         description: Panier validé et vidé
+ */
 router.post('/cart/:user_id/checkout', protectWithToken, ensureRestaurateurRole, verifyUser, checkoutCart);
 
-/*******************************************************************
- * @desc                Get Stripe Checkout session status
- * @route               GET /cart/session-status
- * @access              Private (Restaurateurs only, Verified users)
- *******************************************************************/
+/**
+ * @swagger
+ * /api/cart/stripe/session-status:
+ *   get:
+ *     summary: Récupérer le statut de la session Stripe Checkout
+ *     tags:
+ *       - Panier
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Statut de la session Stripe récupéré
+ */
 router.get(
     '/cart/stripe/session-status',
     protectWithToken,
@@ -104,11 +304,25 @@ router.get(
     getStripeSessionStatus
 );
 
-/*******************************************************************
- * @desc                Create a Stripe Checkout session
- * @route               POST /cart/checkout-session
- * @access              Private (Restaurateurs only, Verified users)
- *******************************************************************/
+/**
+ * @swagger
+ * /api/cart/stripe/checkout-session:
+ *   post:
+ *     summary: Créer une session Stripe Checkout
+ *     tags:
+ *       - Panier
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *     responses:
+ *       200:
+ *         description: Session Stripe Checkout créée
+ */
 router.post(
     '/cart/stripe/checkout-session',
     protectWithToken,
