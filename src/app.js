@@ -74,21 +74,25 @@ app.use((err, req, res, next) => {
 // ------------------------------------ start server -----------------------------------------
 const dbUri = process.env.DB_URI;
 
-mongoose.connect(dbUri).then(async () => {
-    logger.info("DB connected");
+if (require.main === module) {
+    mongoose.connect(dbUri).then(async () => {
+        logger.info("DB connected");
 
-    if (process.env.NODE_ENV === "development" && sslOptions) {
-        https.createServer(sslOptions, app).listen(port, async () => {
-            logger.info(`App is running securely at https://localhost:${port}`);
-            swaggerDocs(app, port);
-        });
-    } else {
-        app.listen(port, async () => {
-            logger.info(`App is running at http://localhost:${port}`);
-            swaggerDocs(app, port);
-        });
-    }
-}).catch(() => {
-    logger.error("Could not connect to db");
-    process.exit(1);
-});
+        if (process.env.NODE_ENV === "development" && sslOptions) {
+            https.createServer(sslOptions, app).listen(port, async () => {
+                logger.info(`App is running securely at https://localhost:${port}`);
+                swaggerDocs(app, port);
+            });
+        } else {
+            app.listen(port, async () => {
+                logger.info(`App is running at http://localhost:${port}`);
+                swaggerDocs(app, port);
+            });
+        }
+    }).catch(() => {
+        logger.error("Could not connect to db");
+        process.exit(1);
+    });
+}
+
+module.exports = app;

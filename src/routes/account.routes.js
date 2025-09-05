@@ -16,67 +16,211 @@ const uploadImageMiddleware = require('../middlewares/uploadImage.middleware');
 
 const router = express.Router();
 
-/*******************************************************************
- * @desc                Post Profile Picture
- * @route               POST /api/users/:id/profile-picture
- * @access              Private
- *******************************************************************/
+/**
+ * @swagger
+ * {id}/profile-picture:
+ *   post:
+ *     summary: Ajouter une photo de profil
+ *     tags:
+ *       - Compte
+ *     security:
+ *       - bearerAuth: []
+ *     consumes:
+ *       - multipart/form-data
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: ID de l'utilisateur
+ *       - in: formData
+ *         name: profilePicture
+ *         type: file
+ *         description: Image de profil à télécharger
+ *     responses:
+ *       200:
+ *         description: Photo de profil ajoutée
+ */
 router.route('/:id/profile-picture').post(protectWithToken, uploadImageMiddleware("profilePicture"),  postProfilePicture);
 
-/*******************************************************************
- * @desc                Get Profile Picture
- * @route               GET /api/users/:id/profile-picture
- * @access              Public
- *******************************************************************/
+/**
+ * @swagger
+ * {id}/profile-picture:
+ *   get:
+ *     summary: Récupérer la photo de profil d'un utilisateur
+ *     tags:
+ *       - Compte
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: ID de l'utilisateur
+ *     responses:
+ *       200:
+ *         description: Photo de profil récupérée
+ */
 router.route('/:id/profile-picture').get(getProfilePicture);
 
-/*******************************************************************
- * @desc                Post Description
- * @route               POST /api/users/:id/description
- * @access              Private
- *******************************************************************/
+/**
+ * @swagger
+ * {id}/description:
+ *   post:
+ *     summary: Ajouter une description utilisateur
+ *     tags:
+ *       - Compte
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: ID de l'utilisateur
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               description:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Description ajoutée
+ */
 router.route('/:id/description').post(protectWithToken, postDescription);
 
-/*******************************************************************
- * @desc                Get Description
- * @route               GET /api/users/:id/description
- * @access              Public
- *******************************************************************/
+/**
+ * @swagger
+ * {id}/description:
+ *   get:
+ *     summary: Récupérer la description d'un utilisateur
+ *     tags:
+ *       - Compte
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: ID de l'utilisateur
+ *     responses:
+ *       200:
+ *         description: Description récupérée
+ */
 router.route('/:id/description').get(getDescription);
 
-/*******************************************************************
- * @desc                Delete Profile Picture
- * @route               DELETE /api/users/:id/profile-picture
- * @access              Private
- *******************************************************************/
+/**
+ * @swagger
+ * {id}/profile-picture:
+ *   delete:
+ *     summary: Supprimer la photo de profil d'un utilisateur
+ *     tags:
+ *       - Compte
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: ID de l'utilisateur
+ *     responses:
+ *       200:
+ *         description: Photo de profil supprimée
+ */
 router.route('/:id/profile-picture').delete(protectWithToken, deleteProfilePicture);
 
-/*******************************************************************
- * @desc                Delete Description
- * @route               DELETE /api/users/:id/description
- * @access              Private
- *******************************************************************/
+/**
+ * @swagger
+ * {id}/description:
+ *   delete:
+ *     summary: Supprimer la description d'un utilisateur
+ *     tags:
+ *       - Compte
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: ID de l'utilisateur
+ *     responses:
+ *       200:
+ *         description: Description supprimée
+ */
 router.route('/:id/description').delete(protectWithToken, deleteDescription);
 
-/*******************************************************************
- * @desc                Update current restaurateur profile by a property
- * @route               PUT /api/restaurateur/update
- * @access              Private
- *******************************************************************/
+/**
+ * @swagger
+ * /restaurateur/update:
+ *   put:
+ *     summary: Mettre à jour le profil restaurateur
+ *     tags:
+ *       - Compte
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *     responses:
+ *       200:
+ *         description: Profil restaurateur mis à jour
+ */
 router.route('/restaurateur/update').put(protectWithToken, updateRestaurateurProfile);
 
-/*******************************************************************
- * @desc                Update current producteur profile by a property
- * @route               PUT /api/producteurs/update
- * @access              Private
- *******************************************************************/
+/**
+ * @swagger
+ * /producteur/update:
+ *   put:
+ *     summary: Mettre à jour le profil producteur
+ *     tags:
+ *       - Compte
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *     responses:
+ *       200:
+ *         description: Profil producteur mis à jour
+ */
 router.route('/producteur/update').put(protectWithToken, updateProducteurProfile);
 
-/*******************************************************************
- * @desc    Get all products by user ID
- * @route   GET /products/user/:userId
- * @access  Public
- *******************************************************************/
+/**
+ * @swagger
+ * /products/user/{userId}:
+ *   get:
+ *     summary: Récupérer tous les produits d'un utilisateur
+ *     tags:
+ *       - Compte
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: userId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: ID de l'utilisateur
+ *     responses:
+ *       200:
+ *         description: Liste des produits récupérée
+ */
 router.route('/products/user/:userId').get(protectWithToken, getProductsByUserId);
 
 module.exports = router;
